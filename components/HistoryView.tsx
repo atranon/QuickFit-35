@@ -1,15 +1,16 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Calendar, Clock, Trash2, Clipboard, Cloud } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Trash2, Clipboard, Cloud, BookOpen } from 'lucide-react';
 import { WorkoutLog } from '../types';
 import SyncModal from './SyncModal';
 
 interface HistoryViewProps {
   onBack: () => void;
   onReset: () => void;
+  onShowTutorial: () => void;
 }
 
-const HistoryView: React.FC<HistoryViewProps> = ({ onBack, onReset }) => {
+const HistoryView: React.FC<HistoryViewProps> = ({ onBack, onReset, onShowTutorial }) => {
   const [history, setHistory] = useState<WorkoutLog[]>([]);
   const [isSyncOpen, setIsSyncOpen] = useState(false);
 
@@ -54,11 +55,17 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onBack, onReset }) => {
           <h2 className="text-xl font-bold text-white">History</h2>
         </div>
         <div className="flex gap-2">
-            <button 
-                onClick={() => setIsSyncOpen(true)} 
+            <button
+                onClick={() => setIsSyncOpen(true)}
                 className="text-xs bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-bold transition"
             >
                 <Cloud size={14} /> Sync
+            </button>
+            <button
+                onClick={onShowTutorial}
+                className="text-xs bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-bold transition"
+            >
+                <BookOpen size={14} /> Tutorial
             </button>
             <button onClick={confirmReset} className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 px-2">
                 <Trash2 size={14} /> Reset

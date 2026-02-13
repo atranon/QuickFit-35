@@ -6,6 +6,7 @@ import { ViewState, WorkoutLog } from './types';
 import WorkoutView from './components/WorkoutView';
 import HistoryView from './components/HistoryView';
 import TimerBar from './components/TimerBar';
+import OnboardingModal from './components/OnboardingModal';
 import { playBeep } from './utils/audioUtils';
 
 const App: React.FC = () => {
@@ -13,8 +14,17 @@ const App: React.FC = () => {
   const [activeDayKey, setActiveDayKey] = useState<string | null>(null);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
-  
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
   const intervalRef = useRef<number | null>(null);
+
+  // Check if user has completed onboarding
+  useEffect(() => {
+    const hasCompletedOnboarding = localStorage.getItem('onboarding_completed');
+    if (!hasCompletedOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, []);
 
   const days = [
     { key: 'monday', label: 'Mon', rest: false },
@@ -82,13 +92,22 @@ const App: React.FC = () => {
     // Preserve sync credentials
     const apiKey = localStorage.getItem('sync_api_key');
     const binId = localStorage.getItem('sync_bin_id');
-    
+
     localStorage.clear();
-    
+
     if (apiKey) localStorage.setItem('sync_api_key', apiKey);
     if (binId) localStorage.setItem('sync_bin_id', binId);
-    
+
     window.location.reload();
+  };
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('onboarding_completed', 'true');
+    setShowOnboarding(false);
+  };
+
+  const handleShowTutorial = () => {
+    setShowOnboarding(true);
   };
 
   const renderDashboard = () => (
@@ -177,17 +196,25 @@ const App: React.FC = () => {
         )}
         {view === 'history' && (
           <div className="pt-20 px-4 max-w-md mx-auto">
-            <HistoryView onBack={() => setView('dashboard')} onReset={handleReset} />
+            <HistoryView
+              onBack={() => setView('dashboard')}
+              onReset={handleReset}
+              onShowTutorial={handleShowTutorial}
+            />
           </div>
         )}
       </main>
 
-      <TimerBar 
-        seconds={timerSeconds} 
-        isActive={timerActive} 
-        onStart={startTimer} 
-        onStop={stopTimer} 
+      <TimerBar
+        seconds={timerSeconds}
+        isActive={timerActive}
+        onStart={startTimer}
+        onStop={stopTimer}
       />
+
+      {showOnboarding && (
+        <OnboardingModal onComplete={handleOnboardingComplete} />
+      )}
     </div>
   );
 };
