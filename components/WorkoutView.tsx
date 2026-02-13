@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Columns, List, Sparkles, Clock, Check, Info, StickyNote, TrendingUp, Target, History, Timer, Trophy } from 'lucide-react';
+import { ArrowLeft, Columns, List, Sparkles, Clock, Check, Info, StickyNote, TrendingUp, Target, History, Timer, Trophy, RefreshCw } from 'lucide-react';
 import { DaySchedule, Exercise, WorkoutLog, SetData } from '../types';
 import { generateFormDescription, generateWorkoutRoutine } from '../services/geminiService';
 import GeminiModal from './GeminiModal';
 import WorkoutCompletionModal from './WorkoutCompletionModal';
+import ExerciseSwapModal from './ExerciseSwapModal';
 import { triggerBackgroundSync } from '../services/storageService';
 import { triggerPRCelebration } from '../utils/confetti';
+import { EXERCISE_ALTERNATIVES } from '../constants/exerciseAlternatives';
+import { DEFAULT_WARMUP_COOLDOWN } from '../constants/defaultWarmup';
 
 interface WorkoutViewProps {
   dayKey: string;
@@ -41,6 +44,10 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
     dayTitle: schedule.title
   });
   const [pendingWorkoutLog, setPendingWorkoutLog] = useState<WorkoutLog | null>(null);
+
+  const [showSwapModal, setShowSwapModal] = useState(false);
+  const [swapExerciseId, setSwapExerciseId] = useState<string | null>(null);
+  const [swapExerciseName, setSwapExerciseName] = useState('');
 
   useEffect(() => {
     const savedNotes = localStorage.getItem(`workout_notes_${dayKey}`);
@@ -247,6 +254,21 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
     }
   };
 
+  const handleOpenSwapModal = (exId: string, exerciseName: string) => {
+    setSwapExerciseId(exId);
+    setSwapExerciseName(exerciseName);
+    setShowSwapModal(true);
+  };
+
+  const handleSwapExercise = (newName: string) => {
+    if (swapExerciseId) {
+      handleNameChange(swapExerciseId, newName);
+    }
+    setShowSwapModal(false);
+    setSwapExerciseId(null);
+    setSwapExerciseName('');
+  };
+
   const openFormCheck = async (exId: string, defaultName: string, category: string) => {
     const name = customNames[exId] || defaultName;
     setModalTitle(`${name} - Form`);
@@ -276,7 +298,7 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
     try {
       const names = schedule.exercises.map(e => customNames[e.id] || e.name);
       const text = await generateWorkoutRoutine(schedule.title, names);
-      
+
       const lines = text.split('\n').map((line, i) => {
           if (line.startsWith('###')) return <h4 key={i} className="text-lg font-bold text-blue-300 mt-3">{line.replace('###', '')}</h4>;
           if (line.startsWith('##')) return <h3 key={i} className="text-xl font-bold text-blue-400 mt-4">{line.replace('##', '')}</h3>;
@@ -287,7 +309,27 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
       setModalContent(<div>{lines}</div>);
       setModalTextForTTS(text.replace(/[#*-]/g, ''));
     } catch (e) {
-      setModalContent(<p className="text-red-400">Failed to generate routine.</p>);
+      // Gracefully degrade to default warm-up if Gemini API is not available
+      console.log('Gemini API unavailable, using default warm-up');
+      const text = DEFAULT_WARMUP_COOLDOWN;
+      const lines = text.split('\n').map((line, i) => {
+          if (line.startsWith('###')) return <h4 key={i} className="text-lg font-bold text-green-300 mt-3">{line.replace('###', '')}</h4>;
+          if (line.startsWith('##')) return <h3 key={i} className="text-xl font-bold text-green-400 mt-4">{line.replace('##', '')}</h3>;
+          if (line.startsWith('*') || line.startsWith('-')) return <li key={i} className="ml-4 list-disc text-slate-300">{line.replace(/[*|-]/, '')}</li>;
+          return <p key={i} className="mb-1">{line}</p>;
+      });
+
+      setModalContent(
+        <div>
+          <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 mb-4">
+            <p className="text-xs text-green-300">
+              💡 Showing default routine (Gemini AI not configured)
+            </p>
+          </div>
+          <div>{lines}</div>
+        </div>
+      );
+      setModalTextForTTS(text.replace(/[#*-]/g, ''));
     } finally {
       setIsModalLoading(false);
     }
@@ -508,14 +550,21 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
                         </div>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <button 
+                      <button
+                          onClick={() => handleOpenSwapModal(ex.id, customNames[ex.id] || ex.name)}
+                          title="Swap Exercise"
+                          className="text-slate-600 hover:text-green-400 transition p-0.5"
+                      >
+                          <RefreshCw size={13} />
+                      </button>
+                      <button
                           onClick={() => onStartTimer(ex.rest)}
                           title="Start Rest"
                           className="text-slate-500 hover:text-amber-400 transition p-0.5"
                       >
                           <Timer size={13} />
                       </button>
-                      <button 
+                      <button
                           onClick={() => openFormCheck(ex.id, ex.name, ex.defaultCategory)}
                           className="text-slate-600 hover:text-blue-400 transition shrink-0 p-0.5"
                       >
@@ -573,6 +622,14 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
         isOpen={showCompletionModal}
         stats={completionStats}
         onClose={handleCompletionClose}
+      />
+
+      <ExerciseSwapModal
+        isOpen={showSwapModal}
+        exerciseName={swapExerciseName}
+        alternatives={EXERCISE_ALTERNATIVES[swapExerciseName] || []}
+        onClose={() => setShowSwapModal(false)}
+        onSwap={handleSwapExercise}
       />
     </div>
   );

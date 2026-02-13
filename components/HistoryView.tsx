@@ -1,18 +1,14 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Calendar, Clock, Trash2, Clipboard, Cloud, BookOpen } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Clipboard } from 'lucide-react';
 import { WorkoutLog } from '../types';
-import SyncModal from './SyncModal';
 
 interface HistoryViewProps {
   onBack: () => void;
-  onReset: () => void;
-  onShowTutorial: () => void;
 }
 
-const HistoryView: React.FC<HistoryViewProps> = ({ onBack, onReset, onShowTutorial }) => {
+const HistoryView: React.FC<HistoryViewProps> = ({ onBack }) => {
   const [history, setHistory] = useState<WorkoutLog[]>([]);
-  const [isSyncOpen, setIsSyncOpen] = useState(false);
 
   const loadHistory = useCallback(() => {
     const saved = localStorage.getItem('workout_history');
@@ -33,44 +29,13 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onBack, onReset, onShowTutori
     loadHistory();
   }, [loadHistory]);
 
-  const confirmReset = () => {
-    if (window.confirm("Are you sure you want to clear ALL history and custom data?")) {
-      onReset();
-    }
-  };
-
   return (
     <div className="pb-24">
-      <SyncModal 
-        isOpen={isSyncOpen} 
-        onClose={() => setIsSyncOpen(false)} 
-        onSyncComplete={loadHistory}
-      />
-      
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-3">
-          <button onClick={onBack} className="bg-slate-800 p-2 rounded-lg text-white hover:bg-slate-700">
-            <ArrowLeft size={20} />
-          </button>
-          <h2 className="text-xl font-bold text-white">History</h2>
-        </div>
-        <div className="flex gap-2">
-            <button
-                onClick={() => setIsSyncOpen(true)}
-                className="text-xs bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-bold transition"
-            >
-                <Cloud size={14} /> Sync
-            </button>
-            <button
-                onClick={onShowTutorial}
-                className="text-xs bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-bold transition"
-            >
-                <BookOpen size={14} /> Tutorial
-            </button>
-            <button onClick={confirmReset} className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 px-2">
-                <Trash2 size={14} /> Reset
-            </button>
-        </div>
+      <div className="flex items-center gap-3 mb-6">
+        <button onClick={onBack} className="bg-slate-800 p-2 rounded-lg text-white hover:bg-slate-700">
+          <ArrowLeft size={20} />
+        </button>
+        <h2 className="text-xl font-bold text-white">History</h2>
       </div>
 
       {history.length === 0 ? (

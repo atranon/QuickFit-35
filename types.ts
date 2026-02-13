@@ -47,7 +47,7 @@ export interface LastStats {
     date: string;
 }
 
-export type ViewState = 'dashboard' | 'workout' | 'history' | 'progress';
+export type ViewState = 'dashboard' | 'workout' | 'history' | 'progress' | 'settings';
 
 export interface SyncConfig {
   apiKey: string;

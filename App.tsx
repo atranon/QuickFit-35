@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Dumbbell, Coffee, ChevronRight, History, TrendingUp } from 'lucide-react';
+import { Dumbbell, Coffee, ChevronRight, History, TrendingUp, Settings, Target } from 'lucide-react';
 import { SCHEDULE } from './constants';
 import { ViewState, WorkoutLog } from './types';
 import WorkoutView from './components/WorkoutView';
 import HistoryView from './components/HistoryView';
 import ProgressView from './components/ProgressView';
+import SettingsView from './components/SettingsView';
 import TimerBar from './components/TimerBar';
 import OnboardingModal from './components/OnboardingModal';
 import { playBeep } from './utils/audioUtils';
@@ -111,14 +112,28 @@ const App: React.FC = () => {
     setShowOnboarding(true);
   };
 
-  const renderDashboard = () => (
-    <div className="pt-20 px-4 max-w-md mx-auto pb-24">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-white via-green-100 to-white bg-clip-text text-transparent mb-2">Your Training Week</h2>
-        <p className="text-slate-400 text-sm">Pick a day. Build power. Drive further. 🏌️</p>
-      </div>
-      
-      <div className="grid gap-4">
+  const renderDashboard = () => {
+    const todayDay = days[todayMapped];
+    const hasTodayWorkout = todayDay && !todayDay.rest;
+
+    return (
+      <div className="pt-20 px-4 max-w-md mx-auto pb-24">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-white via-green-100 to-white bg-clip-text text-transparent mb-2">Your Training Week</h2>
+          <p className="text-slate-400 text-sm">Pick a day. Build power. Drive further. 🏌️</p>
+        </div>
+
+        {hasTodayWorkout && (
+          <button
+            onClick={() => handleWorkoutSelect(todayDay.key)}
+            className="w-full mb-6 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-black py-4 px-6 rounded-xl shadow-xl shadow-green-500/20 flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Target size={24} />
+            <span>Quick Start: {SCHEDULE[todayDay.key].title}</span>
+          </button>
+        )}
+
+        <div className="grid gap-4">
         {days.map((day, index) => {
           const isToday = index === todayMapped;
           
@@ -164,7 +179,8 @@ const App: React.FC = () => {
         })}
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100">
@@ -194,6 +210,9 @@ const App: React.FC = () => {
           <button onClick={() => setView('history')} className={`text-xs font-bold flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all ${view === 'history' ? 'bg-green-500/20 text-green-400' : 'text-slate-300 hover:text-green-400 hover:bg-slate-800'}`}>
             <History size={14} /> <span className="hidden sm:inline">History</span>
           </button>
+          <button onClick={() => setView('settings')} className={`text-xs font-bold flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all ${view === 'settings' ? 'bg-green-500/20 text-green-400' : 'text-slate-300 hover:text-green-400 hover:bg-slate-800'}`}>
+            <Settings size={14} /> <span className="hidden sm:inline">Settings</span>
+          </button>
         </div>
       </nav>
 
@@ -212,16 +231,21 @@ const App: React.FC = () => {
         )}
         {view === 'history' && (
           <div className="pt-20 px-4 max-w-md mx-auto">
-            <HistoryView
-              onBack={() => setView('dashboard')}
-              onReset={handleReset}
-              onShowTutorial={handleShowTutorial}
-            />
+            <HistoryView onBack={() => setView('dashboard')} />
           </div>
         )}
         {view === 'progress' && (
           <div className="pt-20 px-4 max-w-md mx-auto">
             <ProgressView onBack={() => setView('dashboard')} />
+          </div>
+        )}
+        {view === 'settings' && (
+          <div className="pt-20 px-4 max-w-md mx-auto">
+            <SettingsView
+              onBack={() => setView('dashboard')}
+              onReset={handleReset}
+              onShowTutorial={handleShowTutorial}
+            />
           </div>
         )}
       </main>
