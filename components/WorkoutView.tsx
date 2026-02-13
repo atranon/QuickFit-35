@@ -3,7 +3,9 @@ import { ArrowLeft, Columns, List, Sparkles, Clock, Check, Info, StickyNote, Tre
 import { DaySchedule, Exercise, WorkoutLog, SetData } from '../types';
 import { generateFormDescription, generateWorkoutRoutine } from '../services/geminiService';
 import GeminiModal from './GeminiModal';
+import WorkoutCompletionModal from './WorkoutCompletionModal';
 import { triggerBackgroundSync } from '../services/storageService';
+import { triggerPRCelebration } from '../utils/confetti';
 
 interface WorkoutViewProps {
   dayKey: string;
@@ -30,6 +32,15 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
   const [modalContent, setModalContent] = useState<React.ReactNode>('');
   const [modalTextForTTS, setModalTextForTTS] = useState('');
   const [isModalLoading, setIsModalLoading] = useState(false);
+
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [completionStats, setCompletionStats] = useState({
+    totalSets: 0,
+    totalVolume: 0,
+    prCount: 0,
+    dayTitle: schedule.title
+  });
+  const [pendingWorkoutLog, setPendingWorkoutLog] = useState<WorkoutLog | null>(null);
 
   useEffect(() => {
     const savedNotes = localStorage.getItem(`workout_notes_${dayKey}`);
@@ -104,7 +115,7 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
 
   const toggleComplete = (exId: string, setNum: number, weight: string, reps: string) => {
     const key = `${exId}_${setNum}`;
-    
+
     if (weight && reps) {
       setCompletedSets(prev => {
         const next = new Set(prev);
@@ -115,20 +126,41 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
           const input = inputValues[key] || { unit: 'lbs' };
           let finalWeight = weight;
           if (input.unit === '#') finalWeight = '#' + finalWeight;
-          
+
+          // Check if this is a PR
+          const ex = schedule.exercises.find(e => e.id === exId);
+          if (ex) {
+            const currentName = customNames[exId] || ex.name;
+            const prevSetData = getPreviousSetData(currentName, setNum);
+            if (prevSetData) {
+              const currentWeightVal = parseFloat((input.weight || weight).replace('#', '')) || 0;
+              const currentRepsVal = parseInt(input.reps || reps) || 0;
+              const prevWeightVal = parseFloat(prevSetData.weight.replace('#', '')) || 0;
+              const prevRepsVal = parseInt(prevSetData.reps) || 0;
+
+              const isWeightUp = currentWeightVal > prevWeightVal;
+              const isRepsUp = currentRepsVal > prevRepsVal;
+
+              if (isWeightUp || isRepsUp) {
+                // Trigger PR celebration!
+                triggerPRCelebration();
+              }
+            }
+          }
+
           localStorage.setItem(`last_${exId}`, JSON.stringify({
             weight: finalWeight,
             reps: reps,
             date: new Date().toISOString()
           }));
-          
+
           setSyncStatus('syncing');
           setTimeout(() => {
             triggerBackgroundSync()
                 .then(() => setSyncStatus('done'))
                 .catch(() => setSyncStatus('idle'));
           }, 2000);
-          
+
           onStartTimer(schedule.exercises.find(e => e.id === exId)?.rest || 60);
         }
         return next;
@@ -148,9 +180,9 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
         if (val && val.weight && val.reps) {
           let w = val.weight;
           if (val.unit === '#') w = '#' + w;
-          exLog.sets.push({ 
-            set: i, 
-            weight: w, 
+          exLog.sets.push({
+            set: i,
+            weight: w,
             reps: val.reps
           });
         }
@@ -172,7 +204,47 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
       exercises: logs
     };
 
-    onFinish(fullLog);
+    // Calculate stats for completion modal
+    let totalSets = 0;
+    let totalVolume = 0;
+    let prCount = 0;
+
+    logs.forEach(exLog => {
+      totalSets += exLog.sets.length;
+
+      exLog.sets.forEach(set => {
+        const weight = parseFloat(set.weight.replace('#', '')) || 0;
+        const reps = parseInt(set.reps) || 0;
+        totalVolume += weight * reps;
+
+        // Check if this set was a PR
+        const prevSetData = getPreviousSetData(exLog.name, set.set);
+        if (prevSetData) {
+          const prevWeight = parseFloat(prevSetData.weight.replace('#', '')) || 0;
+          const prevReps = parseInt(prevSetData.reps) || 0;
+
+          if (weight > prevWeight || reps > prevReps) {
+            prCount++;
+          }
+        }
+      });
+    });
+
+    setPendingWorkoutLog(fullLog);
+    setCompletionStats({
+      totalSets,
+      totalVolume: Math.round(totalVolume),
+      prCount,
+      dayTitle: schedule.title
+    });
+    setShowCompletionModal(true);
+  };
+
+  const handleCompletionClose = () => {
+    setShowCompletionModal(false);
+    if (pendingWorkoutLog) {
+      onFinish(pendingWorkoutLog);
+    }
   };
 
   const openFormCheck = async (exId: string, defaultName: string, category: string) => {
@@ -489,13 +561,19 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
           />
         </div>
 
-        <button 
+        <button
           onClick={handleFinish}
-          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl shadow-xl shadow-blue-900/30 flex items-center justify-center gap-2 transition-all active:scale-95 border border-blue-400/20"
+          className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-black py-4 rounded-xl shadow-xl shadow-green-900/30 flex items-center justify-center gap-2 transition-all active:scale-95 border border-green-400/20"
         >
           <Check size={20} strokeWidth={4} /> Complete & Sync Session
         </button>
       </div>
+
+      <WorkoutCompletionModal
+        isOpen={showCompletionModal}
+        stats={completionStats}
+        onClose={handleCompletionClose}
+      />
     </div>
   );
 };

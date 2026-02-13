@@ -74,9 +74,14 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onBack, onReset, onShowTutori
       </div>
 
       {history.length === 0 ? (
-        <div className="text-center py-12 text-slate-500">
-          <Clipboard size={48} className="mx-auto mb-4 opacity-50" />
-          <p>No workouts logged yet.</p>
+        <div className="text-center py-16 px-4">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 bg-green-500/10 blur-3xl rounded-full"></div>
+            <Clipboard size={64} className="mx-auto text-slate-600 relative z-10" />
+          </div>
+          <h3 className="text-xl font-bold text-white mb-2">No Rounds Yet</h3>
+          <p className="text-slate-400 mb-1">Start your first training session to</p>
+          <p className="text-green-400 font-semibold">build power for longer drives 🏌️</p>
         </div>
       ) : (
         <div className="space-y-4">

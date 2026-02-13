@@ -56,14 +56,14 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
         {/* Card Container */}
         <div className="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
           {/* Header with Logo */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex items-center justify-between">
+          <div className="bg-gradient-to-r from-green-600 to-emerald-700 px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Dumbbell className="text-white" size={24} />
-              <h1 className="font-bold text-xl text-white tracking-wide">QuickFit <span className="text-blue-200">35</span></h1>
+              <h1 className="font-bold text-xl text-white tracking-tight">QuickFit <span className="text-green-200">Golf</span> <span className="text-white">35</span></h1>
             </div>
             <button
               onClick={handleSkip}
-              className="text-blue-100 hover:text-white text-sm font-semibold transition"
+              className="text-green-100 hover:text-white text-sm font-semibold transition"
             >
               Skip
             </button>
@@ -87,7 +87,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
                 key={index}
                 className={`h-2 rounded-full transition-all ${
                   index === currentCard
-                    ? 'w-8 bg-blue-500'
+                    ? 'w-8 bg-green-500'
                     : 'w-2 bg-slate-600'
                 }`}
               />
@@ -111,7 +111,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
 
             <button
               onClick={handleNext}
-              className="flex items-center gap-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition shadow-lg"
+              className="flex items-center gap-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-bold transition shadow-lg"
             >
               {currentCard === cards.length - 1 ? (
                 <>Let's Go <Target size={18} /></>

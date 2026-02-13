@@ -114,8 +114,8 @@ const App: React.FC = () => {
   const renderDashboard = () => (
     <div className="pt-20 px-4 max-w-md mx-auto pb-24">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-white mb-2">Weekly Overview</h2>
-        <p className="text-slate-400 text-sm">Select a day to start tracking.</p>
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-white via-green-100 to-white bg-clip-text text-transparent mb-2">Your Training Week</h2>
+        <p className="text-slate-400 text-sm">Pick a day. Build power. Drive further. 🏌️</p>
       </div>
       
       <div className="grid gap-4">
@@ -141,10 +141,10 @@ const App: React.FC = () => {
 
           const scheduleData = SCHEDULE[day.key];
           return (
-            <div 
+            <div
               key={day.key}
               onClick={() => handleWorkoutSelect(day.key)}
-              className={`cursor-pointer p-4 rounded-xl bg-slate-800/70 backdrop-blur border-l-4 hover:bg-slate-800 transition relative group ${scheduleData.color} ${isToday ? 'ring-2 ring-blue-500 shadow-lg shadow-blue-500/20' : ''}`}
+              className={`cursor-pointer p-4 rounded-xl bg-slate-800/70 backdrop-blur border-l-4 hover:bg-slate-800 hover:shadow-lg hover:shadow-green-500/5 transition-all duration-300 relative group ${scheduleData.color} ${isToday ? 'ring-2 ring-green-500 shadow-lg shadow-green-500/20' : ''}`}
             >
                <div className="flex justify-between items-center">
                  <div className="flex items-center gap-4">
@@ -158,7 +158,7 @@ const App: React.FC = () => {
                  </div>
                  <ChevronRight className="text-slate-500" />
                </div>
-               {isToday && <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">TODAY</span>}
+               {isToday && <span className="absolute -top-2 -right-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg shadow-green-500/30 animate-pulse">TODAY</span>}
             </div>
           );
         })}
@@ -169,17 +169,29 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100">
       {/* Navbar */}
-      <nav className="fixed top-0 w-full z-40 bg-slate-900/80 backdrop-blur border-b border-slate-700 px-4 py-3 flex justify-between items-center">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('dashboard')}>
-           <Dumbbell className="text-blue-500" />
-           <h1 className="font-bold text-lg tracking-wide hidden sm:block">QuickFit <span className="text-blue-500">35</span></h1>
-           <h1 className="font-bold text-lg tracking-wide sm:hidden">QF<span className="text-blue-500">35</span></h1>
+      <nav className="fixed top-0 w-full z-40 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900/95 backdrop-blur border-b border-slate-700/50 px-4 py-3 flex justify-between items-center shadow-lg shadow-black/10">
+        <div className="flex items-center gap-2 cursor-pointer group" onClick={() => setView('dashboard')}>
+           <div className="relative">
+             <div className="absolute inset-0 bg-green-500/20 blur-lg rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+             <Dumbbell className="text-green-500 group-hover:text-green-400 transition-colors relative z-10" size={24} />
+           </div>
+           <div className="hidden sm:block">
+             <h1 className="font-bold text-lg tracking-tight leading-none">
+               <span className="text-white">QuickFit</span> <span className="text-green-500">Golf</span> <span className="bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent font-extrabold">35</span>
+             </h1>
+             <p className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">Strength for Distance</p>
+           </div>
+           <div className="sm:hidden">
+             <h1 className="font-bold text-xl tracking-tight">
+               <span className="text-white">QF</span><span className="text-green-500">G</span> <span className="bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent font-extrabold">35</span>
+             </h1>
+           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => setView('progress')} className="text-xs text-slate-300 hover:text-blue-400 transition font-bold flex items-center gap-1">
+        <div className="flex items-center gap-2">
+          <button onClick={() => setView('progress')} className={`text-xs font-bold flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all ${view === 'progress' ? 'bg-green-500/20 text-green-400' : 'text-slate-300 hover:text-green-400 hover:bg-slate-800'}`}>
             <TrendingUp size={14} /> <span className="hidden sm:inline">Progress</span>
           </button>
-          <button onClick={() => setView('history')} className="text-xs text-slate-300 hover:text-blue-400 transition font-bold flex items-center gap-1">
+          <button onClick={() => setView('history')} className={`text-xs font-bold flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all ${view === 'history' ? 'bg-green-500/20 text-green-400' : 'text-slate-300 hover:text-green-400 hover:bg-slate-800'}`}>
             <History size={14} /> <span className="hidden sm:inline">History</span>
           </button>
         </div>

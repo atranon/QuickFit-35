@@ -15,7 +15,7 @@ export const SCHEDULE: Schedule = {
     monday: {
         title: "Upper Hypertrophy",
         subtitle: "Push/Pull Pump • 30 Mins",
-        color: "border-purple-500",
+        color: "border-emerald-500",
         exercises: [
             { id: "m1a", group: "Superset 1", order: "1A", name: "Incline DB Press", defaultCategory: "Chest/Shoulders", sets: 3, reps: "10-12", rest: 15 },
             { id: "m1b", group: "Superset 1", order: "1B", name: "Seated Cable Row", defaultCategory: "Back - Horizontal Pull", sets: 3, reps: "10-12", rest: 60 },
