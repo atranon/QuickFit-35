@@ -1,5 +1,5 @@
 
-import { BackupData } from '../types';
+import { BackupData, WorkoutPlanFrequency, ProgramType } from '../types';
 
 const BIN_API_URL = "https://api.jsonbin.io/v3/b";
 
@@ -22,6 +22,8 @@ export const createBackup = (): BackupData => {
   const customNames: Record<string, string> = {};
   const lastStats: Record<string, any> = {};
   const notes: Record<string, string> = {};
+  const selectedPlan = (localStorage.getItem('selected_plan') as WorkoutPlanFrequency) || '3x';
+  const selectedProgram = (localStorage.getItem('selected_program') as ProgramType) || 'golf';
 
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -44,7 +46,9 @@ export const createBackup = (): BackupData => {
     history,
     customNames,
     lastStats,
-    notes
+    notes,
+    selectedPlan,
+    selectedProgram
   };
 };
 
@@ -69,6 +73,14 @@ export const restoreBackup = (data: BackupData) => {
     // Restore Notes
     if (data.notes) {
         Object.entries(data.notes).forEach(([k, v]) => localStorage.setItem(k, v as string));
+    }
+
+    // Restore Selected Plan & Program
+    if (data.selectedPlan) {
+        localStorage.setItem('selected_plan', data.selectedPlan);
+    }
+    if (data.selectedProgram) {
+        localStorage.setItem('selected_program', data.selectedProgram);
     }
     
     return {

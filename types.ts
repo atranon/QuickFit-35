@@ -1,4 +1,7 @@
 
+export type WorkoutPlanFrequency = '2x' | '3x' | '4x' | '5x';
+export type ProgramType = 'golf' | 'powerbuilding';
+
 export interface Exercise {
   id: string;
   group: string;
@@ -8,6 +11,7 @@ export interface Exercise {
   sets: number;
   reps: string;
   rest: number;
+  type?: 'strength' | 'speed' | 'technique';
 }
 
 export interface DaySchedule {
@@ -15,10 +19,18 @@ export interface DaySchedule {
   subtitle: string;
   color: string;
   exercises: Exercise[];
+  type?: 'strength' | 'speed' | 'technique' | 'rest';
 }
 
 export interface Schedule {
   [key: string]: DaySchedule;
+}
+
+export interface PlanData {
+  id: WorkoutPlanFrequency;
+  name: string;
+  description: string;
+  schedule: Schedule;
 }
 
 export interface SetData {
@@ -47,7 +59,7 @@ export interface LastStats {
     date: string;
 }
 
-export type ViewState = 'dashboard' | 'workout' | 'history';
+export type ViewState = 'dashboard' | 'workout' | 'history' | 'plan-selection';
 
 export interface SyncConfig {
   apiKey: string;
@@ -61,4 +73,6 @@ export interface BackupData {
   customNames: Record<string, string>;
   lastStats: Record<string, any>;
   notes: Record<string, string>;
+  selectedPlan?: WorkoutPlanFrequency;
+  selectedProgram?: ProgramType;
 }
