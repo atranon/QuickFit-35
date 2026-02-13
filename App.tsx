@@ -7,6 +7,7 @@ import WorkoutView from './components/WorkoutView';
 import HistoryView from './components/HistoryView';
 import ProgressView from './components/ProgressView';
 import SettingsView from './components/SettingsView';
+import PreferencesView from './components/PreferencesView';
 import TimerBar from './components/TimerBar';
 import OnboardingModal from './components/OnboardingModal';
 import { playBeep } from './utils/audioUtils';
@@ -110,6 +111,10 @@ const App: React.FC = () => {
 
   const handleShowTutorial = () => {
     setShowOnboarding(true);
+  };
+
+  const handleShowPreferences = () => {
+    setView('preferences');
   };
 
   const renderDashboard = () => {
@@ -245,7 +250,13 @@ const App: React.FC = () => {
               onBack={() => setView('dashboard')}
               onReset={handleReset}
               onShowTutorial={handleShowTutorial}
+              onShowPreferences={handleShowPreferences}
             />
+          </div>
+        )}
+        {view === 'preferences' && (
+          <div className="pt-20 px-4 max-w-md mx-auto">
+            <PreferencesView onBack={() => setView('settings')} />
           </div>
         )}
       </main>

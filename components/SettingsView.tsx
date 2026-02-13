@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Cloud, BookOpen, Mail, Info, Trash2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Cloud, BookOpen, Mail, Info, Trash2, AlertCircle, User, RefreshCw } from 'lucide-react';
 import SyncModal from './SyncModal';
 
 interface SettingsViewProps {
   onBack: () => void;
   onReset: () => void;
   onShowTutorial: () => void;
+  onShowPreferences?: () => void;
 }
 
-const SettingsView: React.FC<SettingsViewProps> = ({ onBack, onReset, onShowTutorial }) => {
+const SettingsView: React.FC<SettingsViewProps> = ({ onBack, onReset, onShowTutorial, onShowPreferences }) => {
   const [isSyncOpen, setIsSyncOpen] = useState(false);
 
   const confirmReset = () => {
@@ -38,6 +39,52 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack, onReset, onShowTuto
       </div>
 
       <div className="space-y-4">
+        {/* Restart Tutorial - Prominent Section */}
+        <div className="bg-gradient-to-r from-green-600/20 to-emerald-600/20 border-2 border-green-500/40 rounded-xl overflow-hidden shadow-lg shadow-green-500/10">
+          <div className="px-4 py-3 border-b border-green-500/30 bg-green-600/20">
+            <h3 className="font-bold text-white flex items-center gap-2">
+              <RefreshCw size={18} className="text-green-400" />
+              Restart Tutorial
+            </h3>
+          </div>
+          <div className="p-4">
+            <p className="text-sm text-slate-300 mb-4">
+              Want to replay the onboarding and update your preferences? Start fresh here.
+            </p>
+            <button
+              onClick={onShowTutorial}
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition shadow-lg shadow-green-500/20"
+            >
+              <RefreshCw size={18} />
+              Restart Tutorial & Change Preferences
+            </button>
+          </div>
+        </div>
+
+        {/* User Preferences Section */}
+        {onShowPreferences && (
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-700 bg-slate-800/30">
+              <h3 className="font-bold text-white flex items-center gap-2">
+                <User size={18} className="text-purple-400" />
+                My Preferences
+              </h3>
+            </div>
+            <div className="p-4">
+              <p className="text-sm text-slate-400 mb-4">
+                View and update your fitness level, goals, and weight unit preferences.
+              </p>
+              <button
+                onClick={onShowPreferences}
+                className="w-full bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition border border-purple-500/30"
+              >
+                <User size={18} />
+                Manage Preferences
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Sync & Backup Section */}
         <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-700 bg-slate-800/30">
@@ -56,28 +103,6 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack, onReset, onShowTuto
             >
               <Cloud size={18} />
               Open Sync & Backup
-            </button>
-          </div>
-        </div>
-
-        {/* Tutorial Section */}
-        <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-700 bg-slate-800/30">
-            <h3 className="font-bold text-white flex items-center gap-2">
-              <BookOpen size={18} className="text-green-400" />
-              Tutorial
-            </h3>
-          </div>
-          <div className="p-4">
-            <p className="text-sm text-slate-400 mb-4">
-              Replay the onboarding walkthrough to review how the app works.
-            </p>
-            <button
-              onClick={onShowTutorial}
-              className="w-full bg-green-500/20 hover:bg-green-500/30 text-green-300 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition border border-green-500/30"
-            >
-              <BookOpen size={18} />
-              View Tutorial
             </button>
           </div>
         </div>

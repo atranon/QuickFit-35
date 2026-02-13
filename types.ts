@@ -47,7 +47,7 @@ export interface LastStats {
     date: string;
 }
 
-export type ViewState = 'dashboard' | 'workout' | 'history' | 'progress' | 'settings';
+export type ViewState = 'dashboard' | 'workout' | 'history' | 'progress' | 'settings' | 'preferences';
 
 export interface SyncConfig {
   apiKey: string;
@@ -61,4 +61,18 @@ export interface BackupData {
   customNames: Record<string, string>;
   lastStats: Record<string, any>;
   notes: Record<string, string>;
+  preferences?: UserPreferences;
+}
+
+export type FitnessLevel = 'beginner' | 'intermediate' | 'advanced';
+export type PrimaryGoal = 'distance' | 'strength' | 'stability' | 'fitness';
+export type WeightUnit = 'lbs' | 'kg';
+export type TrainingExperience = 'none' | 'some' | 'regular';
+
+export interface UserPreferences {
+  fitnessLevel: FitnessLevel;
+  primaryGoal: PrimaryGoal;
+  weightUnit: WeightUnit;
+  trainingExperience: TrainingExperience;
+  completedAt?: number;
 }

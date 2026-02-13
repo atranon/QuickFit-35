@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Dumbbell, TrendingUp, Calendar, Target } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Dumbbell, TrendingUp, Calendar, Target, User, Trophy, Scale, Zap } from 'lucide-react';
+import { FitnessLevel, PrimaryGoal, WeightUnit, TrainingExperience, UserPreferences } from '../types';
+import { saveUserPreferences } from '../services/storageService';
 
 interface OnboardingModalProps {
   onComplete: () => void;
@@ -7,9 +9,11 @@ interface OnboardingModalProps {
 
 const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
   const [currentCard, setCurrentCard] = useState(0);
+  const [preferences, setPreferences] = useState<Partial<UserPreferences>>({});
 
-  const cards = [
+  const infoCards = [
     {
+      type: 'info' as const,
       icon: <Target className="w-16 h-16 text-blue-500 mb-4" />,
       title: "Your Caddy for Strength",
       subtitle: "Welcome to QuickFit 35",
@@ -17,6 +21,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
       highlight: "Build power, stability, and rotational force for a better game."
     },
     {
+      type: 'info' as const,
       icon: <Calendar className="w-16 h-16 text-green-500 mb-4" />,
       title: "Simple Game Plan",
       subtitle: "How It Works",
@@ -24,6 +29,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
       highlight: "Like having a coach in your pocket—no guesswork needed."
     },
     {
+      type: 'info' as const,
       icon: <TrendingUp className="w-16 h-16 text-orange-500 mb-4" />,
       title: "Track Every Rep",
       subtitle: "Progressive Overload Made Easy",
@@ -32,11 +38,68 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
     }
   ];
 
+  const preferenceCards = [
+    {
+      type: 'preference' as const,
+      icon: <User className="w-16 h-16 text-purple-500 mb-4" />,
+      title: "What's Your Fitness Level?",
+      subtitle: "Customize Your Experience",
+      description: "This helps us understand where you're starting from.",
+      preferenceKey: 'fitnessLevel' as const,
+      options: [
+        { value: 'beginner' as FitnessLevel, label: 'Beginner', desc: 'New to strength training' },
+        { value: 'intermediate' as FitnessLevel, label: 'Intermediate', desc: 'Some lifting experience' },
+        { value: 'advanced' as FitnessLevel, label: 'Advanced', desc: 'Regular lifter' }
+      ]
+    },
+    {
+      type: 'preference' as const,
+      icon: <Trophy className="w-16 h-16 text-yellow-500 mb-4" />,
+      title: "What's Your Primary Goal?",
+      subtitle: "Focus Your Training",
+      description: "Choose what matters most to your game.",
+      preferenceKey: 'primaryGoal' as const,
+      options: [
+        { value: 'distance' as PrimaryGoal, label: 'Add Distance', desc: 'More yards off the tee' },
+        { value: 'strength' as PrimaryGoal, label: 'Build Strength', desc: 'Overall power' },
+        { value: 'stability' as PrimaryGoal, label: 'Improve Stability', desc: 'Balance & control' },
+        { value: 'fitness' as PrimaryGoal, label: 'General Fitness', desc: 'Feel better, play better' }
+      ]
+    },
+    {
+      type: 'preference' as const,
+      icon: <Scale className="w-16 h-16 text-blue-500 mb-4" />,
+      title: "Preferred Weight Unit?",
+      subtitle: "Choose Your Display",
+      description: "Select how you want weights displayed.",
+      preferenceKey: 'weightUnit' as const,
+      options: [
+        { value: 'lbs' as WeightUnit, label: 'Pounds (lbs)', desc: 'Standard US units' },
+        { value: 'kg' as WeightUnit, label: 'Kilograms (kg)', desc: 'Metric units' }
+      ]
+    },
+    {
+      type: 'preference' as const,
+      icon: <Zap className="w-16 h-16 text-orange-500 mb-4" />,
+      title: "Training Experience?",
+      subtitle: "Final Question",
+      description: "How familiar are you with weight training?",
+      preferenceKey: 'trainingExperience' as const,
+      options: [
+        { value: 'none' as TrainingExperience, label: 'None', desc: 'First time with weights' },
+        { value: 'some' as TrainingExperience, label: 'Some', desc: 'Occasional lifter' },
+        { value: 'regular' as TrainingExperience, label: 'Regular', desc: 'Consistent training' }
+      ]
+    }
+  ];
+
+  const cards = [...infoCards, ...preferenceCards];
+
   const handleNext = () => {
     if (currentCard < cards.length - 1) {
       setCurrentCard(currentCard + 1);
     } else {
-      onComplete();
+      handleComplete();
     }
   };
 
@@ -47,7 +110,33 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
   };
 
   const handleSkip = () => {
+    // Skip with default preferences
+    handleComplete();
+  };
+
+  const handleComplete = () => {
+    // Save preferences with defaults if not selected
+    const finalPreferences: UserPreferences = {
+      fitnessLevel: preferences.fitnessLevel || 'intermediate',
+      primaryGoal: preferences.primaryGoal || 'distance',
+      weightUnit: preferences.weightUnit || 'lbs',
+      trainingExperience: preferences.trainingExperience || 'some',
+      completedAt: Date.now()
+    };
+    saveUserPreferences(finalPreferences);
     onComplete();
+  };
+
+  const updatePreference = <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => {
+    setPreferences(prev => ({ ...prev, [key]: value }));
+  };
+
+  const isPreferenceSelected = (card: number): boolean => {
+    if (card === 3) return !!preferences.fitnessLevel;
+    if (card === 4) return !!preferences.primaryGoal;
+    if (card === 5) return !!preferences.weightUnit;
+    if (card === 6) return !!preferences.trainingExperience;
+    return true;
   };
 
   return (
@@ -75,9 +164,34 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
             <h2 className="text-2xl font-bold text-white mb-2">{cards[currentCard].title}</h2>
             <p className="text-blue-400 text-sm font-semibold mb-4">{cards[currentCard].subtitle}</p>
             <p className="text-slate-300 text-base leading-relaxed mb-4">{cards[currentCard].description}</p>
-            <div className="bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 mt-2">
-              <p className="text-slate-400 text-sm italic">{cards[currentCard].highlight}</p>
-            </div>
+
+            {cards[currentCard].type === 'info' && 'highlight' in cards[currentCard] && (
+              <div className="bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 mt-2">
+                <p className="text-slate-400 text-sm italic">{cards[currentCard].highlight}</p>
+              </div>
+            )}
+
+            {cards[currentCard].type === 'preference' && 'options' in cards[currentCard] && (
+              <div className="w-full mt-4 space-y-3">
+                {cards[currentCard].options.map((option: any) => {
+                  const isSelected = preferences[cards[currentCard].preferenceKey as keyof UserPreferences] === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => updatePreference(cards[currentCard].preferenceKey as keyof UserPreferences, option.value)}
+                      className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+                        isSelected
+                          ? 'border-green-500 bg-green-500/20 shadow-lg shadow-green-500/20'
+                          : 'border-slate-700 bg-slate-800/50 hover:border-slate-600 hover:bg-slate-800'
+                      }`}
+                    >
+                      <div className="font-bold text-white mb-1">{option.label}</div>
+                      <div className="text-sm text-slate-400">{option.desc}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Progress Dots */}
@@ -111,7 +225,12 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
 
             <button
               onClick={handleNext}
-              className="flex items-center gap-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-bold transition shadow-lg"
+              disabled={cards[currentCard].type === 'preference' && !isPreferenceSelected(currentCard)}
+              className={`flex items-center gap-1 px-6 py-3 rounded-lg font-bold transition shadow-lg ${
+                cards[currentCard].type === 'preference' && !isPreferenceSelected(currentCard)
+                  ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white'
+              }`}
             >
               {currentCard === cards.length - 1 ? (
                 <>Let's Go <Target size={18} /></>
@@ -124,7 +243,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
 
         {/* Bottom Hint */}
         <p className="text-center text-slate-500 text-xs mt-4">
-          You can revisit this tutorial anytime from History → View Tutorial
+          You can revisit this tutorial and change your preferences anytime from Settings
         </p>
       </div>
     </div>
