@@ -1,0 +1,28 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#0f172a" rx="80"/>
+
+  <!-- Dumbbell Shape -->
+  <!-- Left weight plate -->
+  <rect x="80" y="200" width="60" height="112" fill="#3b82f6" rx="8"/>
+  <rect x="90" y="210" width="40" height="92" fill="#60a5fa" rx="4"/>
+
+  <!-- Right weight plate -->
+  <rect x="372" y="200" width="60" height="112" fill="#3b82f6" rx="8"/>
+  <rect x="382" y="210" width="40" height="92" fill="#60a5fa" rx="4"/>
+
+  <!-- Handle/Bar -->
+  <rect x="140" y="240" width="232" height="32" fill="#94a3b8" rx="16"/>
+
+  <!-- Golf ball accent -->
+  <circle cx="396" cy="140" r="32" fill="#10b981" opacity="0.9"/>
+  <circle cx="390" cy="134" r="3" fill="#0f172a" opacity="0.3"/>
+  <circle cx="402" cy="136" r="3" fill="#0f172a" opacity="0.3"/>
+  <circle cx="396" cy="146" r="3" fill="#0f172a" opacity="0.3"/>
+  <circle cx="388" cy="143" r="3" fill="#0f172a" opacity="0.3"/>
+  <circle cx="404" cy="144" r="3" fill="#0f172a" opacity="0.3"/>
+
+  <!-- QF 35 Text -->
+  <text x="256" y="420" font-family="Arial, sans-serif" font-size="64" font-weight="bold" fill="#3b82f6" text-anchor="middle">QF</text>
+  <text x="256" y="460" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#60a5fa" text-anchor="middle">35</text>
+</svg>
