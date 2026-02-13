@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Dumbbell, Coffee, ChevronRight, History } from 'lucide-react';
+import { Dumbbell, Coffee, ChevronRight, History, TrendingUp } from 'lucide-react';
 import { SCHEDULE } from './constants';
 import { ViewState, WorkoutLog } from './types';
 import WorkoutView from './components/WorkoutView';
 import HistoryView from './components/HistoryView';
+import ProgressView from './components/ProgressView';
 import TimerBar from './components/TimerBar';
 import OnboardingModal from './components/OnboardingModal';
 import { playBeep } from './utils/audioUtils';
@@ -175,6 +176,9 @@ const App: React.FC = () => {
            <h1 className="font-bold text-lg tracking-wide sm:hidden">QF<span className="text-blue-500">35</span></h1>
         </div>
         <div className="flex items-center gap-3">
+          <button onClick={() => setView('progress')} className="text-xs text-slate-300 hover:text-blue-400 transition font-bold flex items-center gap-1">
+            <TrendingUp size={14} /> <span className="hidden sm:inline">Progress</span>
+          </button>
           <button onClick={() => setView('history')} className="text-xs text-slate-300 hover:text-blue-400 transition font-bold flex items-center gap-1">
             <History size={14} /> <span className="hidden sm:inline">History</span>
           </button>
@@ -201,6 +205,11 @@ const App: React.FC = () => {
               onReset={handleReset}
               onShowTutorial={handleShowTutorial}
             />
+          </div>
+        )}
+        {view === 'progress' && (
+          <div className="pt-20 px-4 max-w-md mx-auto">
+            <ProgressView onBack={() => setView('dashboard')} />
           </div>
         )}
       </main>
