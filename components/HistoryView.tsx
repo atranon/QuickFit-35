@@ -98,6 +98,7 @@ const HistoryView: React.FC<HistoryViewProps> = ({ onBack, onReset }) => {
                            <span className="text-slate-400">{s.weight}</span>
                            <span className="text-slate-600 mx-0.5">x</span>
                            <span className="text-slate-400">{s.reps}</span>
+                           {s.rpe && <span className="text-amber-500/60 ml-1 text-[10px]">@{s.rpe}</span>}
                            {idx < ex.sets.length - 1 && <span className="ml-2 opacity-30">|</span>}
                          </span>
                        ))}

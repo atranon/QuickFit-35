@@ -15,7 +15,7 @@ export const generateFormDescription = async (
   exCategory: string
 ): Promise<string> => {
   const ai = getAI();
-  const systemPrompt = "Act as an elite strength and conditioning coach. Provide a ultra-concise (max 40 words) technical breakdown of form cues and muscle recruitment for the exercise.";
+  const systemPrompt = "Act as an elite strength and conditioning coach. Provide a ultra-concise (max 40 words) technical breakdown of form cues and muscle recruitment for the exercise. Prioritize joint safety and explosive intent.";
   const userQuery = `Technique check: ${exName} (${exCategory})`;
 
   const response = await ai.models.generateContent({

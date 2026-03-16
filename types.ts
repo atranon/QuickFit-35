@@ -12,6 +12,8 @@ export interface Exercise {
   reps: string;
   rest: number;
   type?: 'strength' | 'speed' | 'technique';
+  tempo?: string;
+  rpe?: number;
 }
 
 export interface DaySchedule {
@@ -37,6 +39,8 @@ export interface SetData {
   set: number;
   weight: string; // Can contain '#' prefix for plate math
   reps: string;
+  rpe?: string;
+  heartRate?: number;
 }
 
 export interface ExerciseLog {
@@ -51,6 +55,7 @@ export interface WorkoutLog {
   dayTitle: string;
   notes: string;
   exercises: ExerciseLog[];
+  avgHeartRate?: number;
 }
 
 export interface LastStats {
@@ -59,7 +64,14 @@ export interface LastStats {
     date: string;
 }
 
-export type ViewState = 'dashboard' | 'workout' | 'history' | 'plan-selection';
+export type ViewState = 'dashboard' | 'workout' | 'history' | 'plan-selection' | 'onboarding' | 'progress';
+
+export interface UserPreferences {
+  fitnessLevel: string;
+  goal: string;
+  unit: 'lbs' | 'kg';
+  experience: string;
+}
 
 export interface SyncConfig {
   apiKey: string;
@@ -75,4 +87,6 @@ export interface BackupData {
   notes: Record<string, string>;
   selectedPlan?: WorkoutPlanFrequency;
   selectedProgram?: ProgramType;
+  currentInputs?: Record<string, any>;
+  currentCompleted?: Record<string, any>;
 }
