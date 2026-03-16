@@ -4,20 +4,24 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "tsx server.ts",
     "build": "vite build",
+    "start": "node server.ts",
     "preview": "vite preview",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@google/genai": "^1.30.0",
+    "canvas-confetti": "1.9.3",
+    "clsx": "^2.1.1",
+    "express": "^5.2.1",
+    "lucide-react": "^0.554.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "@google/genai": "^1.30.0",
-    "lucide-react": "^0.554.0",
-    "clsx": "^2.1.1",
-    "canvas-confetti": "1.9.3"
+    "tsx": "^4.21.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "~5.8.2",
