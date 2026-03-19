@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Dumbbell, Coffee, ChevronRight, History, Settings, Zap, Target, RefreshCw, Trophy, Dumbbell as StrengthIcon, Activity, Heart, ShieldCheck, ShieldAlert, BookOpen, BarChart3, MessageSquare } from 'lucide-react';
+import { Dumbbell, Coffee, ChevronRight, History, Settings, Zap, Target, RefreshCw, Trophy, Dumbbell as StrengthIcon, Activity, Heart, ShieldCheck, ShieldAlert, BookOpen, BarChart3 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { PLANS, COACH_AUDIT } from './constants';
 import { ViewState, WorkoutLog, WorkoutPlanFrequency, ProgramType } from './types';
@@ -323,27 +323,6 @@ const App: React.FC = () => {
               </div>
             );
           })}
-        </div>
-
-        {/* Beta Feedback Button */}
-        <div className="mt-10">
-            <a 
-                href={`mailto:rob.j.lara@gmail.com?subject=QuickFit 35 Beta Feedback&body=Device: ${navigator.userAgent}%0D%0A%0D%0AFeedback:`}
-                className="w-full bg-slate-800/40 border border-slate-700/50 rounded-2xl p-5 flex items-center justify-between group hover:bg-slate-800 transition-all duration-300 shadow-lg"
-            >
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400 group-hover:scale-110 transition-transform">
-                        <MessageSquare size={20} />
-                    </div>
-                    <div>
-                        <h4 className="text-sm font-black text-white uppercase tracking-tight italic">Beta Feedback</h4>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Report bugs or suggest features</p>
-                    </div>
-                </div>
-                <div className="bg-slate-700/50 p-1.5 rounded-full text-slate-500 group-hover:text-blue-400 group-hover:bg-blue-500/10 transition-all">
-                    <ChevronRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-                </div>
-            </a>
         </div>
       </div>
     );
