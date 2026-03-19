@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Cloud, BookOpen, Mail, Info, Trash2, AlertCircle, User, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Cloud, BookOpen, Mail, Info, Trash2, AlertCircle, User, RefreshCw, Bug } from 'lucide-react';
 import SyncModal from './SyncModal';
+import * as Sentry from '@sentry/react';
 
 interface SettingsViewProps {
   onBack: () => void;
@@ -21,6 +22,15 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack, onReset, onShowTuto
   const handleSyncComplete = () => {
     // Reload any necessary data after sync
     console.log('Sync completed');
+  };
+
+  const triggerTestError = () => {
+    try {
+      throw new Error('Sentry Test Error - Error monitoring is working! 🚨');
+    } catch (error) {
+      Sentry.captureException(error);
+      alert('Test error sent to Sentry! Check your Sentry dashboard.');
+    }
   };
 
   return (
@@ -180,6 +190,30 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack, onReset, onShowTuto
             </button>
           </div>
         </div>
+
+        {/* Sentry Test (Development Only) */}
+        {import.meta.env.DEV && (
+          <div className="bg-yellow-500/5 border border-yellow-500/30 rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-yellow-500/30 bg-yellow-500/10">
+              <h3 className="font-bold text-yellow-400 flex items-center gap-2">
+                <Bug size={18} />
+                Sentry Test (Dev Only)
+              </h3>
+            </div>
+            <div className="p-4">
+              <p className="text-sm text-slate-400 mb-4">
+                Test Sentry error monitoring by triggering a test error.
+              </p>
+              <button
+                onClick={triggerTestError}
+                className="w-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition border border-yellow-500/30"
+              >
+                <Bug size={18} />
+                Trigger Test Error
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
