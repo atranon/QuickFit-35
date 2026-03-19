@@ -63,9 +63,16 @@ Create a `.env` file in the root directory:
 ```env
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_SENTRY_DSN=your_sentry_dsn_here
 ```
 
 **Note:** `.env` is gitignored to protect your credentials.
+
+### Getting Your Sentry DSN
+1. Create a free account at [sentry.io](https://sentry.io)
+2. Create a new project (select "React")
+3. Copy your DSN from Project Settings → Client Keys (DSN)
+4. Add it to your `.env` file
 
 ## Project Structure
 
