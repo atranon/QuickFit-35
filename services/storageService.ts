@@ -1,5 +1,5 @@
 
-import { BackupData, WorkoutPlanFrequency, ProgramType } from '../types';
+import { BackupData, UserPreferences, WorkoutPlanFrequency, ProgramType } from '../types';
 
 const BIN_API_URL = "https://api.jsonbin.io/v3/b";
 
@@ -15,6 +15,23 @@ export const saveSyncConfig = (apiKey: string, binId: string) => {
   const cleanBinId = binId.replace('https://api.jsonbin.io/v3/b/', '').replace('/', '').trim();
   localStorage.setItem('sync_api_key', apiKey.trim());
   localStorage.setItem('sync_bin_id', cleanBinId);
+};
+
+// --- User Preferences ---
+
+export const getUserPreferences = (): UserPreferences | null => {
+  const prefs = localStorage.getItem('user_preferences');
+  if (!prefs) return null;
+  try {
+    return JSON.parse(prefs) as UserPreferences;
+  } catch (e) {
+    console.warn('Failed to parse user preferences', e);
+    return null;
+  }
+};
+
+export const saveUserPreferences = (preferences: UserPreferences) => {
+  localStorage.setItem('user_preferences', JSON.stringify(preferences));
 };
 
 export const createBackup = (): BackupData => {
@@ -54,6 +71,8 @@ export const createBackup = (): BackupData => {
     }
   }
 
+  const preferences = getUserPreferences();
+
   return {
     version: 1,
     timestamp: Date.now(),
@@ -61,6 +80,7 @@ export const createBackup = (): BackupData => {
     customNames,
     lastStats,
     notes,
+    preferences: preferences || undefined,
     currentInputs,
     currentCompleted,
     selectedPlan,
@@ -70,12 +90,12 @@ export const createBackup = (): BackupData => {
 
 export const restoreBackup = (data: BackupData) => {
     if (!data) throw new Error("No data to restore");
-    
+
     // Restore History
     if (Array.isArray(data.history)) {
         localStorage.setItem('workout_history', JSON.stringify(data.history));
     }
-    
+
     // Restore Custom Names
     if (data.customNames) {
         Object.entries(data.customNames).forEach(([k, v]) => localStorage.setItem(k, v as string));
@@ -89,6 +109,11 @@ export const restoreBackup = (data: BackupData) => {
     // Restore Notes
     if (data.notes) {
         Object.entries(data.notes).forEach(([k, v]) => localStorage.setItem(k, v as string));
+    }
+
+    // Restore Preferences
+    if (data.preferences) {
+        saveUserPreferences(data.preferences);
     }
 
     // Restore Current Session
@@ -106,7 +131,8 @@ export const restoreBackup = (data: BackupData) => {
     if (data.selectedProgram) {
         localStorage.setItem('selected_program', data.selectedProgram);
     }
-    
+
+
     return {
         workouts: data.history?.length || 0,
         names: Object.keys(data.customNames || {}).length,

@@ -10,6 +10,8 @@ import TimerBar from './components/TimerBar';
 import OnboardingView from './components/OnboardingView';
 import ProgressView from './components/ProgressView';
 import CompletionModal from './components/CompletionModal';
+import SettingsView from './components/SettingsView';
+import PreferencesView from './components/PreferencesView';
 import { playBeep } from './utils/audioUtils';
 import { connectToHeartRateDevice } from './services/bleService';
 
@@ -366,6 +368,9 @@ const App: React.FC = () => {
           <button onClick={() => setView('history')} className={`text-[10px] transition font-black uppercase tracking-widest flex items-center gap-1.5 px-3 py-2 rounded-lg border ${view === 'history' ? 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/20' : 'bg-slate-800/50 text-slate-300 border-slate-700 hover:text-blue-400'}`}>
             <History size={14} /> <span className="hidden sm:inline">History</span>
           </button>
+          <button onClick={() => setView('settings')} className={`text-[10px] transition font-black uppercase tracking-widest flex items-center gap-1.5 px-3 py-2 rounded-lg border ${view === 'settings' ? 'bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-500/20' : 'bg-slate-800/50 text-slate-300 border-slate-700 hover:text-purple-400'}`}>
+            <Settings size={14} /> <span className="hidden sm:inline">Settings</span>
+          </button>
         </div>
       </nav>
 
@@ -392,6 +397,21 @@ const App: React.FC = () => {
         {view === 'history' && (
           <div className="pt-20 px-4 max-w-md mx-auto">
             <HistoryView onBack={() => setView('dashboard')} onReset={handleReset} />
+          </div>
+        )}
+        {view === 'settings' && (
+          <div className="pt-20 px-4 max-w-md mx-auto">
+            <SettingsView
+              onBack={() => setView('dashboard')}
+              onReset={handleReset}
+              onShowTutorial={() => setView('onboarding')}
+              onShowPreferences={() => setView('preferences')}
+            />
+          </div>
+        )}
+        {view === 'preferences' && (
+          <div className="pt-20 px-4 max-w-md mx-auto">
+            <PreferencesView onBack={() => setView('settings')} />
           </div>
         )}
       </main>

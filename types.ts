@@ -64,14 +64,7 @@ export interface LastStats {
     date: string;
 }
 
-export type ViewState = 'dashboard' | 'workout' | 'history' | 'plan-selection' | 'onboarding' | 'progress';
-
-export interface UserPreferences {
-  fitnessLevel: string;
-  goal: string;
-  unit: 'lbs' | 'kg';
-  experience: string;
-}
+export type ViewState = 'dashboard' | 'workout' | 'history' | 'progress' | 'settings' | 'preferences' | 'plan-selection' | 'onboarding';
 
 export interface SyncConfig {
   apiKey: string;
@@ -85,8 +78,22 @@ export interface BackupData {
   customNames: Record<string, string>;
   lastStats: Record<string, any>;
   notes: Record<string, string>;
+  preferences?: UserPreferences;
   selectedPlan?: WorkoutPlanFrequency;
   selectedProgram?: ProgramType;
   currentInputs?: Record<string, any>;
   currentCompleted?: Record<string, any>;
+}
+
+export type FitnessLevel = 'beginner' | 'intermediate' | 'advanced';
+export type PrimaryGoal = 'distance' | 'strength' | 'stability' | 'fitness';
+export type WeightUnit = 'lbs' | 'kg';
+export type TrainingExperience = 'none' | 'some' | 'regular';
+
+export interface UserPreferences {
+  fitnessLevel: FitnessLevel;
+  primaryGoal: PrimaryGoal;
+  weightUnit: WeightUnit;
+  trainingExperience: TrainingExperience;
+  completedAt?: number;
 }
