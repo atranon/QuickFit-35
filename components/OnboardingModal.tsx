@@ -11,9 +11,30 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
   const [currentCard, setCurrentCard] = useState(0);
   const [preferences, setPreferences] = useState<Partial<UserPreferences>>({});
 
-  const infoCards = [
+  interface InfoCard {
+    type: 'info';
+    icon: React.ReactNode;
+    title: string;
+    subtitle: string;
+    description: string;
+    highlight: string;
+  }
+
+  interface PreferenceCard {
+    type: 'preference';
+    icon: React.ReactNode;
+    title: string;
+    subtitle: string;
+    description: string;
+    preferenceKey: keyof UserPreferences;
+    options: { value: any; label: string; desc: string }[];
+  }
+
+  type Card = InfoCard | PreferenceCard;
+
+  const infoCards: InfoCard[] = [
     {
-      type: 'info' as const,
+      type: 'info',
       icon: <Target className="w-16 h-16 text-blue-500 mb-4" />,
       title: "Your Caddy for Strength",
       subtitle: "Welcome to QuickFit 35",
@@ -21,7 +42,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
       highlight: "Build power, stability, and rotational force for a better game."
     },
     {
-      type: 'info' as const,
+      type: 'info',
       icon: <Calendar className="w-16 h-16 text-green-500 mb-4" />,
       title: "Simple Game Plan",
       subtitle: "How It Works",
@@ -29,7 +50,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
       highlight: "Like having a coach in your pocket—no guesswork needed."
     },
     {
-      type: 'info' as const,
+      type: 'info',
       icon: <TrendingUp className="w-16 h-16 text-orange-500 mb-4" />,
       title: "Track Every Rep",
       subtitle: "Progressive Overload Made Easy",
@@ -38,14 +59,14 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
     }
   ];
 
-  const preferenceCards = [
+  const preferenceCards: PreferenceCard[] = [
     {
-      type: 'preference' as const,
+      type: 'preference',
       icon: <User className="w-16 h-16 text-purple-500 mb-4" />,
       title: "What's Your Fitness Level?",
       subtitle: "Customize Your Experience",
       description: "This helps us understand where you're starting from.",
-      preferenceKey: 'fitnessLevel' as const,
+      preferenceKey: 'fitnessLevel',
       options: [
         { value: 'beginner' as FitnessLevel, label: 'Beginner', desc: 'New to strength training' },
         { value: 'intermediate' as FitnessLevel, label: 'Intermediate', desc: 'Some lifting experience' },
@@ -53,12 +74,12 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
       ]
     },
     {
-      type: 'preference' as const,
+      type: 'preference',
       icon: <Trophy className="w-16 h-16 text-yellow-500 mb-4" />,
       title: "What's Your Primary Goal?",
       subtitle: "Focus Your Training",
       description: "Choose what matters most to your game.",
-      preferenceKey: 'primaryGoal' as const,
+      preferenceKey: 'primaryGoal',
       options: [
         { value: 'distance' as PrimaryGoal, label: 'Add Distance', desc: 'More yards off the tee' },
         { value: 'strength' as PrimaryGoal, label: 'Build Strength', desc: 'Overall power' },
@@ -67,24 +88,24 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
       ]
     },
     {
-      type: 'preference' as const,
+      type: 'preference',
       icon: <Scale className="w-16 h-16 text-blue-500 mb-4" />,
       title: "Preferred Weight Unit?",
       subtitle: "Choose Your Display",
       description: "Select how you want weights displayed.",
-      preferenceKey: 'weightUnit' as const,
+      preferenceKey: 'weightUnit',
       options: [
         { value: 'lbs' as WeightUnit, label: 'Pounds (lbs)', desc: 'Standard US units' },
         { value: 'kg' as WeightUnit, label: 'Kilograms (kg)', desc: 'Metric units' }
       ]
     },
     {
-      type: 'preference' as const,
+      type: 'preference',
       icon: <Zap className="w-16 h-16 text-orange-500 mb-4" />,
       title: "Training Experience?",
       subtitle: "Final Question",
       description: "How familiar are you with weight training?",
-      preferenceKey: 'trainingExperience' as const,
+      preferenceKey: 'trainingExperience',
       options: [
         { value: 'none' as TrainingExperience, label: 'None', desc: 'First time with weights' },
         { value: 'some' as TrainingExperience, label: 'Some', desc: 'Occasional lifter' },
@@ -93,7 +114,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
     }
   ];
 
-  const cards = [...infoCards, ...preferenceCards];
+  const cards: Card[] = [...infoCards, ...preferenceCards];
 
   const handleNext = () => {
     if (currentCard < cards.length - 1) {
@@ -131,11 +152,11 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
     setPreferences(prev => ({ ...prev, [key]: value }));
   };
 
-  const isPreferenceSelected = (card: number): boolean => {
-    if (card === 3) return !!preferences.fitnessLevel;
-    if (card === 4) return !!preferences.primaryGoal;
-    if (card === 5) return !!preferences.weightUnit;
-    if (card === 6) return !!preferences.trainingExperience;
+  const isPreferenceSelected = (cardIndex: number): boolean => {
+    const card = cards[cardIndex];
+    if (card.type === 'preference') {
+      return !!preferences[card.preferenceKey];
+    }
     return true;
   };
 
@@ -165,20 +186,21 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onComplete }) => {
             <p className="text-blue-400 text-sm font-semibold mb-4">{cards[currentCard].subtitle}</p>
             <p className="text-slate-300 text-base leading-relaxed mb-4">{cards[currentCard].description}</p>
 
-            {cards[currentCard].type === 'info' && 'highlight' in cards[currentCard] && (
+            {cards[currentCard].type === 'info' && (
               <div className="bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 mt-2">
                 <p className="text-slate-400 text-sm italic">{cards[currentCard].highlight}</p>
               </div>
             )}
 
-            {cards[currentCard].type === 'preference' && 'options' in cards[currentCard] && (
+            {cards[currentCard].type === 'preference' && (
               <div className="w-full mt-4 space-y-3">
                 {cards[currentCard].options.map((option: any) => {
-                  const isSelected = preferences[cards[currentCard].preferenceKey as keyof UserPreferences] === option.value;
+                  const card = cards[currentCard] as PreferenceCard;
+                  const isSelected = preferences[card.preferenceKey] === option.value;
                   return (
                     <button
                       key={option.value}
-                      onClick={() => updatePreference(cards[currentCard].preferenceKey as keyof UserPreferences, option.value)}
+                      onClick={() => updatePreference(card.preferenceKey, option.value)}
                       className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
                         isSelected
                           ? 'border-green-500 bg-green-500/20 shadow-lg shadow-green-500/20'

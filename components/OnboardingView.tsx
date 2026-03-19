@@ -2,9 +2,10 @@
 import React, { useState } from 'react';
 import { Zap, Target, Scale, Trophy, ChevronRight, ArrowLeft } from 'lucide-react';
 import { UserPreferences } from '../types';
+import { saveUserPreferences } from '../services/storageService';
 
 interface OnboardingViewProps {
-  onComplete: () => void;
+  onComplete: (prefs: UserPreferences) => void;
 }
 
 type OnboardingStep = {
@@ -22,25 +23,25 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     subtitle: "Determine your current technical floor.",
     icon: <Trophy className="text-blue-500" size={32} />,
     options: [
-      { label: "Beginner", value: "Beginner", desc: "New to structured training." },
-      { label: "Intermediate", value: "Intermediate", desc: "6+ months of consistent load." },
-      { label: "Advanced", value: "Advanced", desc: "Elite technical proficiency." }
+      { label: "Beginner", value: "beginner", desc: "New to structured training." },
+      { label: "Intermediate", value: "intermediate", desc: "6+ months of consistent load." },
+      { label: "Advanced", value: "advanced", desc: "Elite technical proficiency." }
     ]
   },
   {
-    id: 'goal',
+    id: 'primaryGoal',
     title: "Primary Goal",
     subtitle: "What is your high-priority output?",
     icon: <Target className="text-emerald-400" size={32} />,
     options: [
-      { label: "Add Distance", value: "Add Distance", desc: "Max clubhead velocity focus." },
-      { label: "Build Strength", value: "Build Strength", desc: "Hypertrophy and force production." },
-      { label: "Improve Stability", value: "Improve Stability", desc: "Sequence and lead-leg integrity." },
-      { label: "General Fitness", value: "General Fitness", desc: "Broad metabolic conditioning." }
+      { label: "Add Distance", value: "distance", desc: "Max clubhead velocity focus." },
+      { label: "Build Strength", value: "strength", desc: "Hypertrophy and force production." },
+      { label: "Improve Stability", value: "stability", desc: "Sequence and lead-leg integrity." },
+      { label: "General Fitness", value: "fitness", desc: "Broad metabolic conditioning." }
     ]
   },
   {
-    id: 'unit',
+    id: 'weightUnit',
     title: "Weight Unit",
     subtitle: "Standardize your performance tracking.",
     icon: <Scale className="text-purple-400" size={32} />,
@@ -50,14 +51,14 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     ]
   },
   {
-    id: 'experience',
+    id: 'trainingExperience',
     title: "Training Experience",
     subtitle: "Your history with high-intensity load.",
     icon: <Zap className="text-amber-400" size={32} />,
     options: [
-      { label: "None", value: "None", desc: "Starting fresh today." },
-      { label: "Some", value: "Some", desc: "Occasional gym attendance." },
-      { label: "Regular", value: "Regular", desc: "Structured athlete background." }
+      { label: "None", value: "none", desc: "Starting fresh today." },
+      { label: "Some", value: "some", desc: "Occasional gym attendance." },
+      { label: "Regular", value: "regular", desc: "Structured athlete background." }
     ]
   }
 ];
@@ -66,10 +67,9 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [prefs, setPrefs] = useState<Partial<UserPreferences>>({});
 
-  const handleSelect = (value: string) => {
+  const handleSelect = (value: any) => {
     const stepId = ONBOARDING_STEPS[currentStep].id;
-    const newPrefs = { ...prefs, [stepId]: value };
-    setPrefs(newPrefs);
+    setPrefs(prev => ({ ...prev, [stepId]: value }));
     
     // Auto-advance
     if (currentStep < ONBOARDING_STEPS.length - 1) {
@@ -78,9 +78,16 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
   };
 
   const handleFinish = () => {
-    localStorage.setItem('user_preferences', JSON.stringify(prefs));
+    const finalPreferences: UserPreferences = {
+      fitnessLevel: prefs.fitnessLevel || 'intermediate',
+      primaryGoal: prefs.primaryGoal || 'distance',
+      weightUnit: prefs.weightUnit || 'lbs',
+      trainingExperience: prefs.trainingExperience || 'some',
+      completedAt: Date.now()
+    };
+    saveUserPreferences(finalPreferences);
     localStorage.setItem('onboarding_complete', 'true');
-    onComplete();
+    onComplete(finalPreferences);
   };
 
   const goBack = () => {
