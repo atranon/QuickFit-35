@@ -1,5 +1,5 @@
 
-import { BackupData, UserPreferences } from '../types';
+import { BackupData, UserPreferences, WorkoutPlanFrequency, ProgramType } from '../types';
 
 const BIN_API_URL = "https://api.jsonbin.io/v3/b";
 
@@ -39,6 +39,10 @@ export const createBackup = (): BackupData => {
   const customNames: Record<string, string> = {};
   const lastStats: Record<string, any> = {};
   const notes: Record<string, string> = {};
+  const currentInputs: Record<string, any> = {};
+  const currentCompleted: Record<string, any> = {};
+  const selectedPlan = (localStorage.getItem('selected_plan') as WorkoutPlanFrequency) || '3x';
+  const selectedProgram = (localStorage.getItem('selected_program') as ProgramType) || 'golf';
 
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -52,6 +56,18 @@ export const createBackup = (): BackupData => {
         }
     } else if (key?.startsWith('workout_notes_')) {
         notes[key] = localStorage.getItem(key) || '';
+    } else if (key?.startsWith('current_inputs_')) {
+        try {
+            currentInputs[key] = JSON.parse(localStorage.getItem(key) || '{}');
+        } catch(e) {
+            console.warn(`Failed to parse ${key}`, e);
+        }
+    } else if (key?.startsWith('current_completed_')) {
+        try {
+            currentCompleted[key] = JSON.parse(localStorage.getItem(key) || '[]');
+        } catch(e) {
+            console.warn(`Failed to parse ${key}`, e);
+        }
     }
   }
 
@@ -64,7 +80,11 @@ export const createBackup = (): BackupData => {
     customNames,
     lastStats,
     notes,
-    preferences: preferences || undefined
+    preferences: preferences || undefined,
+    currentInputs,
+    currentCompleted,
+    selectedPlan,
+    selectedProgram
   };
 };
 
@@ -95,6 +115,23 @@ export const restoreBackup = (data: BackupData) => {
     if (data.preferences) {
         saveUserPreferences(data.preferences);
     }
+
+    // Restore Current Session
+    if (data.currentInputs) {
+        Object.entries(data.currentInputs).forEach(([k, v]) => localStorage.setItem(k, JSON.stringify(v)));
+    }
+    if (data.currentCompleted) {
+        Object.entries(data.currentCompleted).forEach(([k, v]) => localStorage.setItem(k, JSON.stringify(v)));
+    }
+
+    // Restore Selected Plan & Program
+    if (data.selectedPlan) {
+        localStorage.setItem('selected_plan', data.selectedPlan);
+    }
+    if (data.selectedProgram) {
+        localStorage.setItem('selected_program', data.selectedProgram);
+    }
+
 
     return {
         workouts: data.history?.length || 0,

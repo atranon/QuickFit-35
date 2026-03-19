@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Modality } from "@google/genai";
 import { decodeBase64, decodeAudioData } from "../utils/audioUtils";
 
@@ -14,18 +15,18 @@ export const generateFormDescription = async (
   exCategory: string
 ): Promise<string> => {
   const ai = getAI();
-  const systemPrompt = "Act as a concise strength and conditioning coach. Provide a very brief (max 50 words) description of the proper form and primary muscle focus for the given exercise.";
-  const userQuery = `Provide the form and muscle focus for: ${exName} (${exCategory})`;
+  const systemPrompt = "Act as an elite strength and conditioning coach. Provide a ultra-concise (max 40 words) technical breakdown of form cues and muscle recruitment for the exercise. Prioritize joint safety and explosive intent.";
+  const userQuery = `Technique check: ${exName} (${exCategory})`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "gemini-3-flash-preview",
     contents: userQuery,
     config: {
       systemInstruction: systemPrompt,
     },
   });
 
-  return response.text || "No description available.";
+  return response.text || "Form data unavailable.";
 };
 
 export const generateWorkoutRoutine = async (
@@ -33,25 +34,25 @@ export const generateWorkoutRoutine = async (
   exerciseNames: string[]
 ): Promise<string> => {
   const ai = getAI();
-  const systemPrompt = "Act as a professional fitness coach specializing in hypertrophy. Generate a specific 5-minute dynamic warm-up and a 5-minute static cool-down tailored to the provided list of exercises. Format using Markdown.";
-  const userQuery = `The workout is titled "${dayTitle}" and includes: ${exerciseNames.join(', ')}. Generate the warm-up and cool-down.`;
+  const systemPrompt = "Act as a professional performance coach. Design a specific 3-minute dynamic warm-up and a 2-minute specific cool-down for the provided exercise list. Focus on joint lubrication and CNS priming. Use Markdown.";
+  const userQuery = `Session: "${dayTitle}". Exercises: ${exerciseNames.join(', ')}. Generate prep and recovery.`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "gemini-3-flash-preview",
     contents: userQuery,
     config: {
       systemInstruction: systemPrompt,
     },
   });
 
-  return response.text || "No routine generated.";
+  return response.text || "Routine generation failed.";
 };
 
 export const generateSpeech = async (text: string): Promise<AudioBuffer> => {
   const ai = getAI();
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
-    contents: `Say in a professional and motivational tone: ${text}`,
+    contents: `Coach Voice: ${text}`,
     config: {
       responseModalities: [Modality.AUDIO],
       speechConfig: {

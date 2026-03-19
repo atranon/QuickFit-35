@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
     <title>QuickFit Golf 35</title>
 
     <!-- PWA Meta Tags -->
     <meta name="description" content="Golf-specific strength training. 35 minutes, 4 days a week. Build power for longer drives.">
-    <meta name="theme-color" content="#3b82f6">
     <link rel="manifest" href="/manifest.json">
 
     <!-- iOS Meta Tags -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="QF35">
     <link rel="apple-touch-icon" href="/icon-192.png">
 
@@ -22,6 +22,7 @@
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+
 
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -50,12 +51,15 @@
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
-    "clsx": "https://aistudiocdn.com/clsx@^2.1.1"
+    "clsx": "https://aistudiocdn.com/clsx@^2.1.1",
+    "canvas-confetti": "https://esm.sh/canvas-confetti@1.9.3"
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body class="bg-slate-900 text-slate-100 antialiased selection:bg-blue-500 selection:text-white">
     <div id="root"></div>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>
