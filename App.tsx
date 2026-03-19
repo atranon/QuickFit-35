@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Dumbbell, Coffee, ChevronRight, History, Settings, Zap, Target, RefreshCw, Trophy, Dumbbell as StrengthIcon, Activity, Heart, ShieldCheck, ShieldAlert, BookOpen, BarChart3 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { PLANS, COACH_AUDIT } from './constants';
+import { PLANS } from './constants';
+import { getUserPreferences } from './services/storageService';
 import { ViewState, WorkoutLog, WorkoutPlanFrequency, ProgramType } from './types';
 import WorkoutView from './components/WorkoutView';
 import HistoryView from './components/HistoryView';
@@ -221,28 +222,57 @@ const App: React.FC = () => {
     
     return (
       <div className="pt-20 px-4 max-w-md mx-auto pb-24 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        {/* Scientific Audit Header */}
-        <div className="mb-8 p-4 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-slate-700 shadow-xl">
-            <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-2">
-                    <ShieldCheck className="text-emerald-400" size={18} />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Coach Scientific Audit</span>
-                </div>
-                {hrDevice ? (
-                    <div className="flex items-center gap-1.5 animate-pulse bg-red-500/20 px-2 py-0.5 rounded-full border border-red-500/30">
-                        <Heart size={10} className="text-red-500 fill-red-500" />
-                        <span className="text-[10px] font-black text-red-400">{bpm || '--'} BPM</span>
+        {/* Personalized Dashboard Header */}
+        {(() => {
+            const prefs = getUserPreferences();
+            const history = JSON.parse(localStorage.getItem('workout_history') || '[]');
+            const totalWorkouts = history.length;
+
+            let message = '';
+            if (totalWorkouts === 0) {
+                message = prefs?.seasonStatus === 'inseason'
+                    ? "In-season program loaded. Lower volume, max transfer to the course. Let's get your first session in."
+                    : "Your program is ready. First session sets your baseline — pick a weight you can move with perfect form.";
+            } else if (totalWorkouts < 5) {
+                message = `${totalWorkouts} session${totalWorkouts > 1 ? 's' : ''} logged. You're building your baseline. The app learns your strength levels from every set you track.`;
+            } else {
+                const recent = history.slice(-3);
+                const older = history.slice(-6, -3);
+                if (recent.length > 0 && older.length > 0) {
+                    const recentVol = recent.reduce((sum: number, log: any) => sum + log.exercises.reduce((s: number, ex: any) => s + ex.sets.length, 0), 0);
+                    const olderVol = older.reduce((sum: number, log: any) => sum + log.exercises.reduce((s: number, ex: any) => s + ex.sets.length, 0), 0);
+                    if (recentVol > olderVol) {
+                        message = `${totalWorkouts} sessions tracked. Your recent volume is trending up — keep pushing.`;
+                    } else {
+                        message = `${totalWorkouts} sessions tracked. Consistency is the cheat code. Stay the course.`;
+                    }
+                } else {
+                    message = `${totalWorkouts} sessions in the bank. Every rep is data. Every session gets you closer.`;
+                }
+            }
+
+            const seasonBadge = prefs?.seasonStatus === 'inseason' ? 'In-Season'
+                : prefs?.seasonStatus === 'offseason' ? 'Off-Season Build'
+                : prefs?.seasonStatus === 'preseason' ? 'Pre-Season Ramp'
+                : 'Year-Round';
+
+            return (
+                <div className="mb-8 p-4 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-slate-700 shadow-xl">
+                    <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-2">
+                            <ShieldCheck className="text-emerald-400" size={18} />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Your Program</span>
+                        </div>
+                        <span className="text-[9px] font-black bg-slate-800 text-slate-400 px-2 py-1 rounded-full border border-slate-700 uppercase tracking-tighter">
+                            {seasonBadge}
+                        </span>
                     </div>
-                ) : (
-                    <button onClick={handleConnectHR} className="text-[9px] font-black uppercase tracking-tighter text-slate-500 hover:text-emerald-400 flex items-center gap-1">
-                        <Activity size={10} /> Link HR Device
-                    </button>
-                )}
-            </div>
-            <p className="text-[11px] text-slate-300 font-medium leading-relaxed italic border-l-2 border-emerald-500/40 pl-3">
-                "{COACH_AUDIT.assessment}"
-            </p>
-        </div>
+                    <p className="text-[11px] text-slate-300 font-medium leading-relaxed border-l-2 border-emerald-500/40 pl-3">
+                        {message}
+                    </p>
+                </div>
+            );
+        })()}
 
         <div className="flex justify-between items-end mb-6 px-1">
           <div>
@@ -356,7 +386,7 @@ const App: React.FC = () => {
       </nav>
 
       <main className="pt-4">
-        {view === 'onboarding' && <OnboardingView onComplete={() => setView('plan-selection')} />}
+        {view === 'onboarding' && <OnboardingView onComplete={(_prefs) => setView('plan-selection')} />}
         {view === 'dashboard' && renderDashboard()}
         {view === 'plan-selection' && renderPlanSelection()}
         {view === 'progress' && (

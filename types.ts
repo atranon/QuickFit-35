@@ -90,10 +90,24 @@ export type PrimaryGoal = 'distance' | 'strength' | 'stability' | 'fitness';
 export type WeightUnit = 'lbs' | 'kg';
 export type TrainingExperience = 'none' | 'some' | 'regular';
 
+// Golf-specific types
+export type DrivingDistance = 'under200' | '200-230' | '230-260' | '260-290' | '290plus';
+export type HandicapRange = 'beginner' | 'high' | 'mid' | 'low' | 'scratch';
+export type SeasonStatus = 'offseason' | 'preseason' | 'inseason' | 'yearround';
+export type EquipmentAccess = 'full-gym' | 'home-basic' | 'bands-only' | 'no-equipment';
+
 export interface UserPreferences {
+  // Original fields (keeping these so nothing breaks)
   fitnessLevel: FitnessLevel;
   primaryGoal: PrimaryGoal;
   weightUnit: WeightUnit;
   trainingExperience: TrainingExperience;
   completedAt?: number;
+
+  // Golf-specific fields (optional so old saved data still works)
+  drivingDistance?: DrivingDistance;
+  handicapRange?: HandicapRange;
+  seasonStatus?: SeasonStatus;
+  equipmentAccess?: EquipmentAccess;
+  playerName?: string;
 }
