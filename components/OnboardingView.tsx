@@ -128,7 +128,7 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [prefs, setPrefs] = useState<Record<string, string>>({});
 
-  const handleSelect = (value: string) => {
+  const handleSelect = (value: any) => {
     const stepId = ONBOARDING_STEPS[currentStep].id;
     setPrefs(prev => ({ ...prev, [stepId]: value }));
 

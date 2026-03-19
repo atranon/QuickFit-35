@@ -1,33 +1,17 @@
-# QuickFit Golf 35
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
 
-Golf-specific strength training app designed to add yards off the tee. 4 focused workouts per week, 35 minutes each.
+# Run and deploy your AI Studio app
 
-## Features
+This contains everything you need to run your app locally.
 
-- **4-Day Training Split** - Science-backed workout programs (2x, 3x, 4x, 5x frequency options)
-- **Golf-Specific & Powerbuilding Programs** - Choose between explosive golf speed training or hypertrophy-focused powerbuilding
-- **Progressive Overload Tracking** - Log sets, reps, weight with automatic PR detection
-- **Smart Rest Timer** - Built-in countdown timer with audio alerts
-- **Workout History** - Complete log of all sessions with detailed stats
-- **Progress Charts** - Visual analytics powered by Recharts
-- **Cloud Sync** - Backup/restore data via JSONBin.io
-- **User Preferences** - Customize fitness level, goals, weight units (lbs/kg)
-- **PWA Ready** - Install as a mobile app with offline support
-- **Heart Rate Monitoring** - Connect Bluetooth HR devices during workouts
-- **Feedback System** - Integrated Tally form for user feedback
+View your app in AI Studio: https://ai.studio/apps/4f397747-cd44-4c72-99c2-7e66316d283e
 
-## Tech Stack
+## Run Locally
 
-- **Frontend:** React 19, TypeScript
-- **Styling:** Tailwind CSS
-- **Icons:** Lucide React
-- **Charts:** Recharts
-- **Backend:** Express.js (SSR)
-- **Database:** Supabase
-- **Build:** Vite + esbuild
-- **Storage:** localStorage + cloud sync (JSONBin)
+**Prerequisites:**  Node.js
 
-## Quick Start
 
 ### Prerequisites
 - Node.js 18+ installed
