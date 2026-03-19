@@ -309,6 +309,46 @@ const App: React.FC = () => {
             );
         })()}
 
+        {/* Latest Swing Speed — only shows if they've recorded speed data */}
+        {(() => {
+          const history = JSON.parse(localStorage.getItem('workout_history') || '[]');
+          const lastSpeedSession = history.reverse().find((log: any) => log.swingSpeed?.driverSpeed);
+          if (!lastSpeedSession) return null;
+
+          const speed = lastSpeedSession.swingSpeed;
+          const allSpeeds = history.filter((log: any) => log.swingSpeed?.driverSpeed).map((log: any) => log.swingSpeed.driverSpeed);
+          const peakSpeed = allSpeeds.length > 0 ? Math.max(...allSpeeds) : speed.driverSpeed;
+          const isNewPeak = speed.driverSpeed >= peakSpeed;
+
+          return (
+            <div className={`mb-6 p-4 rounded-2xl border shadow-lg ${isNewPeak ? 'bg-gradient-to-r from-amber-500/10 to-emerald-500/10 border-amber-500/30' : 'bg-slate-800/40 border-slate-700'}`}>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-amber-500/20 rounded-xl">
+                    <Zap size={18} className="text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Latest Driver Speed</p>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-black text-white italic">{speed.driverSpeed}</span>
+                      <span className="text-[10px] font-black text-amber-500/60">MPH</span>
+                      {isNewPeak && allSpeeds.length > 1 && (
+                        <span className="text-[8px] font-black bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded ml-1 uppercase tracking-tighter">Peak!</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                {speed.carryDistance && (
+                  <div className="text-right">
+                    <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Carry</p>
+                    <p className="text-lg font-black text-white italic">{speed.carryDistance}<span className="text-[10px] text-slate-500 ml-0.5">yds</span></p>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
         <div className="flex justify-between items-end mb-6 px-1">
           <div>
             <h2 className="text-2xl font-black text-white mb-1 uppercase tracking-tight italic">Schedule</h2>

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Trophy, CheckCircle2, Star, Quote, ArrowRight } from 'lucide-react';
+import { Trophy, CheckCircle2, Star, Quote, ArrowRight, Gauge, Zap } from 'lucide-react';
 import { WorkoutLog } from '../types';
 
 interface CompletionModalProps {
@@ -14,8 +14,29 @@ const CompletionModal: React.FC<CompletionModalProps> = ({ isOpen, onClose, log 
 
   const exerciseCount = log.exercises.length;
   const totalSets = log.exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
+  const hasSpeedData = !!log.swingSpeed?.driverSpeed;
 
-  const quotes = [
+  // Check if this is a new peak speed
+  let isNewPeak = false;
+  if (hasSpeedData) {
+    try {
+      const history = JSON.parse(localStorage.getItem('workout_history') || '[]');
+      const previousSpeeds = history
+        .filter((h: WorkoutLog) => h.swingSpeed?.driverSpeed && h.id !== log.id)
+        .map((h: WorkoutLog) => h.swingSpeed!.driverSpeed!);
+      isNewPeak = previousSpeeds.length === 0 || log.swingSpeed!.driverSpeed! >= Math.max(...previousSpeeds);
+    } catch (e) {
+      // If history parsing fails, just don't show peak badge
+    }
+  }
+
+  const quotes = hasSpeedData ? [
+    "Speed is earned in the gym. You just proved it.",
+    "Every mph is worth 2-3 yards off the tee. Bank it.",
+    "Your body is learning to move faster. The course will notice.",
+    "Clubhead speed doesn't lie. Great session.",
+    "Force production → speed production. That's the equation."
+  ] : [
     "Distance is built in the off-season. Today was another brick.",
     "Force production is the currency of speed.",
     "The ground is your most powerful tool. You loaded it well today.",
@@ -29,7 +50,7 @@ const CompletionModal: React.FC<CompletionModalProps> = ({ isOpen, onClose, log 
       <div className="max-w-sm w-full bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-emerald-500/30 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
         {/* Glow effect */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-emerald-500/10 blur-[80px] -z-10 rounded-full"></div>
-        
+
         <div className="text-center mb-8">
           <div className="inline-flex p-4 bg-emerald-500/20 rounded-2xl mb-4 animate-bounce">
             <Trophy className="text-emerald-400" size={48} />
@@ -37,8 +58,31 @@ const CompletionModal: React.FC<CompletionModalProps> = ({ isOpen, onClose, log 
           <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter leading-none mb-2">
             Session <span className="text-emerald-400">Complete</span>
           </h2>
-          <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Neural Load Verified • Power Logged</p>
+          <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">
+            {hasSpeedData ? 'Speed Session Logged' : 'Power Logged • Progress Tracked'}
+          </p>
         </div>
+
+        {/* Speed data callout — prominent when available */}
+        {hasSpeedData && (
+          <div className={`p-5 rounded-2xl mb-6 text-center ${isNewPeak ? 'bg-gradient-to-br from-amber-500/20 to-emerald-500/10 border-2 border-amber-500/40' : 'bg-amber-500/10 border border-amber-500/20'}`}>
+            {isNewPeak && (
+              <div className="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-400 text-[9px] font-black px-3 py-1 rounded-full mb-3 uppercase tracking-widest">
+                <Zap size={10} fill="currentColor" /> New Peak Speed!
+              </div>
+            )}
+            <div className="flex items-baseline justify-center gap-2">
+              <Gauge size={20} className="text-amber-400" />
+              <span className="text-4xl font-black text-white italic">{log.swingSpeed!.driverSpeed}</span>
+              <span className="text-sm font-black text-amber-500/60">MPH</span>
+            </div>
+            {log.swingSpeed!.carryDistance && (
+              <p className="text-xs text-slate-400 mt-2 font-bold">
+                {log.swingSpeed!.carryDistance} yards carry
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4 mb-8">
           <div className="bg-slate-800/50 border border-slate-700 p-4 rounded-2xl text-center">
@@ -58,7 +102,7 @@ const CompletionModal: React.FC<CompletionModalProps> = ({ isOpen, onClose, log 
            </p>
         </div>
 
-        <button 
+        <button
           onClick={onClose}
           className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 transition active:scale-95 uppercase tracking-widest text-xs italic"
         >
