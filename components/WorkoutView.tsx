@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Columns, List, Sparkles, Clock, Check, Info, StickyNote, TrendingUp, Target, History, Timer, Trophy, Activity, Zap, ShieldCheck, Cloud, ArrowRight } from 'lucide-react';
-import { DaySchedule, Exercise, WorkoutLog, SetData } from '../types';
+import { ArrowLeft, Columns, List, Sparkles, Clock, Check, Info, StickyNote, TrendingUp, Target, History, Timer, Trophy, Activity, Zap, ShieldCheck, Cloud, ArrowRight, Gauge } from 'lucide-react';
+import { DaySchedule, Exercise, WorkoutLog, SetData, SwingSpeedData } from '../types';
 import { generateFormDescription, generateWorkoutRoutine } from '../services/geminiService';
 import GeminiModal from './GeminiModal';
 import { triggerBackgroundSync } from '../services/storageService';
@@ -31,6 +31,11 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
   const [modalTextForTTS, setModalTextForTTS] = useState('');
   const [isModalLoading, setIsModalLoading] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+
+  // Swing speed tracking — only used when the workout has speed exercises
+  const hasSpeedWork = schedule.exercises.some(e => e.type === 'speed');
+  const [swingSpeed, setSwingSpeed] = useState<SwingSpeedData>({});
+  const [showSpeedInput, setShowSpeedInput] = useState(hasSpeedWork);
 
   useEffect(() => {
     const savedNotes = localStorage.getItem(`workout_notes_${dayKey}`);
@@ -63,7 +68,16 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
         const parsed = JSON.parse(savedHistory);
         const sortedHistory = parsed.sort((a: WorkoutLog, b: WorkoutLog) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setHistory(sortedHistory);
-        
+
+        // Load last recorded swing speed for reference
+        if (hasSpeedWork) {
+          const lastSpeedSession = sortedHistory.find((log: WorkoutLog) => log.swingSpeed?.driverSpeed);
+          if (lastSpeedSession?.swingSpeed) {
+            // Pre-fill the device field from their last session (they probably use the same device)
+            setSwingSpeed(prev => ({ ...prev, device: lastSpeedSession.swingSpeed?.device || '' }));
+          }
+        }
+
         // Check if we should show the tutorial
         const tutorialSeen = localStorage.getItem('workout_tutorial_seen');
         if (parsed.length === 0 && !tutorialSeen) {
@@ -171,7 +185,16 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
       return exLog;
     }).filter(l => l.sets.length > 0);
     if (logs.length === 0 && !notes.trim()) { alert("Record at least one set or a note to finish."); return; }
-    const fullLog: WorkoutLog = { id: Date.now(), date: new Date().toISOString(), dayKey, dayTitle: schedule.title, notes, exercises: logs };
+    const fullLog: WorkoutLog = {
+      id: Date.now(),
+      date: new Date().toISOString(),
+      dayKey,
+      dayTitle: schedule.title,
+      notes,
+      exercises: logs,
+      // Only include swing speed data if they actually entered a driver speed
+      ...(swingSpeed.driverSpeed ? { swingSpeed } : {})
+    };
     onFinish(fullLog);
   };
 
@@ -488,6 +511,121 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
       </div>
 
       <div className="mt-8 space-y-4">
+        {/* Swing Speed Input — only shows on days with speed exercises */}
+        {hasSpeedWork && (
+          <div className="bg-gradient-to-br from-amber-500/10 to-orange-600/10 border-2 border-amber-500/30 rounded-2xl p-5 shadow-lg">
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-2">
+                <Gauge size={18} className="text-amber-400" />
+                <span className="text-xs font-black text-amber-400 uppercase tracking-widest">Swing Speed Log</span>
+              </div>
+              {(() => {
+                // Find their last recorded speed to show as reference
+                const lastSpeed = history.find((log: WorkoutLog) => log.swingSpeed?.driverSpeed);
+                if (lastSpeed?.swingSpeed?.driverSpeed) {
+                  return (
+                    <div className="flex items-center gap-1 text-[9px] font-bold bg-slate-800 text-slate-400 px-2 py-1 rounded-full border border-slate-700">
+                      <History size={8} />
+                      <span>Last: {lastSpeed.swingSpeed.driverSpeed} mph</span>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+            </div>
+
+            <p className="text-[10px] text-slate-500 mb-4 leading-relaxed">
+              Log your fastest driver swing speed from today's session. This is the #1 metric that connects your gym work to your game.
+            </p>
+
+            {/* Driver Speed — the main field, large and prominent */}
+            <div className="mb-4">
+              <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
+                Driver Clubhead Speed (mph) <span className="text-amber-400">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="e.g. 105"
+                  value={swingSpeed.driverSpeed || ''}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value) || undefined;
+                    setSwingSpeed(prev => ({ ...prev, driverSpeed: val }));
+                  }}
+                  className="w-full bg-slate-900/60 border-2 border-amber-500/30 focus:border-amber-400 rounded-xl py-3 px-4 text-2xl font-black text-white focus:outline-none placeholder:text-slate-800 transition"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-black text-amber-500/50">MPH</span>
+              </div>
+            </div>
+
+            {/* Optional fields — ball speed and carry distance in a row */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1.5">
+                  Ball Speed (optional)
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="e.g. 155"
+                  value={swingSpeed.ballSpeed || ''}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value) || undefined;
+                    setSwingSpeed(prev => ({ ...prev, ballSpeed: val }));
+                  }}
+                  className="w-full bg-slate-900/60 border border-slate-700 focus:border-amber-500/50 rounded-lg py-2 px-3 text-sm font-black text-white focus:outline-none placeholder:text-slate-800 transition"
+                />
+              </div>
+              <div>
+                <label className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1.5">
+                  Carry Distance (optional)
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="e.g. 260"
+                  value={swingSpeed.carryDistance || ''}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value) || undefined;
+                    setSwingSpeed(prev => ({ ...prev, carryDistance: val }));
+                  }}
+                  className="w-full bg-slate-900/60 border border-slate-700 focus:border-amber-500/50 rounded-lg py-2 px-3 text-sm font-black text-white focus:outline-none placeholder:text-slate-800 transition"
+                />
+              </div>
+            </div>
+
+            {/* Device selector — remembers their last choice */}
+            <div>
+              <label className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1.5">
+                Measured With
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: 'superspeed', label: 'SuperSpeed' },
+                  { value: 'prgr', label: 'PRGR' },
+                  { value: 'mevo', label: 'Mevo/Mevo+' },
+                  { value: 'trackman', label: 'Trackman' },
+                  { value: 'other', label: 'Other' },
+                  { value: 'manual', label: 'Estimated' },
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setSwingSpeed(prev => ({ ...prev, device: opt.value }))}
+                    className={`text-[9px] font-black px-3 py-1.5 rounded-lg border transition uppercase tracking-tight ${
+                      swingSpeed.device === opt.value
+                        ? 'bg-amber-500 border-amber-400 text-white'
+                        : 'bg-slate-800 border-slate-700 text-slate-500 hover:border-slate-500'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {prevNotes && (
              <div className="bg-blue-500/5 border border-blue-500/10 p-4 rounded-xl">
                 <div className="flex items-center gap-2 text-blue-400/50 mb-2 uppercase tracking-widest text-[8px] font-black"><History size={10} /> Previous Session Intel</div>

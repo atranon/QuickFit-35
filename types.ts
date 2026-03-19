@@ -48,6 +48,16 @@ export interface ExerciseLog {
   sets: SetData[];
 }
 
+// Swing speed data captured after speed training sessions
+// All fields are optional because a golfer might only have a radar for driver speed
+// but not a launch monitor for ball speed or carry
+export interface SwingSpeedData {
+  driverSpeed?: number;    // Clubhead speed in mph (the main metric)
+  ballSpeed?: number;      // Ball speed in mph (optional — needs launch monitor)
+  carryDistance?: number;   // Carry distance in yards (optional)
+  device?: string;          // What they measured with: "superspeed", "prgr", "mevo", "trackman", "manual"
+}
+
 export interface WorkoutLog {
   id: number;
   date: string;
@@ -56,6 +66,7 @@ export interface WorkoutLog {
   notes: string;
   exercises: ExerciseLog[];
   avgHeartRate?: number;
+  swingSpeed?: SwingSpeedData;  // NEW: only populated on sessions with speed work
 }
 
 export interface LastStats {

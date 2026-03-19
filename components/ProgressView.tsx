@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState } from 'react';
-import { ArrowLeft, TrendingUp, Calendar, Zap, Trophy, BarChart3, ChevronDown, ChevronUp, Info } from 'lucide-react';
-import { WorkoutLog } from '../types';
+import { ArrowLeft, TrendingUp, Calendar, Zap, Trophy, BarChart3, ChevronDown, ChevronUp, Info, Gauge } from 'lucide-react';
+import { WorkoutLog, SwingSpeedData } from '../types';
 
 interface ProgressViewProps {
   onBack: () => void;
@@ -88,7 +88,24 @@ const ProgressView: React.FC<ProgressViewProps> = ({ onBack }) => {
       });
     });
 
-    return { totalWorkouts, streak, volumeData, dayFrequency, exerciseStats };
+    // Swing Speed tracking — extract all sessions with speed data
+    const speedData: { date: string; speed: number; ballSpeed?: number; carry?: number }[] = [];
+    history.forEach(log => {
+      if (log.swingSpeed?.driverSpeed) {
+        speedData.push({
+          date: new Date(log.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+          speed: log.swingSpeed.driverSpeed,
+          ballSpeed: log.swingSpeed.ballSpeed,
+          carry: log.swingSpeed.carryDistance
+        });
+      }
+    });
+
+    const peakSpeed = speedData.length > 0 ? Math.max(...speedData.map(d => d.speed)) : null;
+    const latestSpeed = speedData.length > 0 ? speedData[speedData.length - 1].speed : null;
+    const speedGain = speedData.length >= 2 ? speedData[speedData.length - 1].speed - speedData[0].speed : null;
+
+    return { totalWorkouts, streak, volumeData, dayFrequency, exerciseStats, speedData, peakSpeed, latestSpeed, speedGain };
   }, [history]);
 
   if (!stats) {
@@ -145,13 +162,98 @@ const ProgressView: React.FC<ProgressViewProps> = ({ onBack }) => {
             </div>
         </div>
         <div className="bg-slate-800/40 border border-slate-700 p-4 rounded-2xl text-center">
-            <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">PRs Hit</span>
+            <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Peak Speed</span>
             <div className="flex items-center justify-center gap-1">
-                <Trophy size={14} className="text-emerald-400" />
-                <span className="text-2xl font-black text-white italic">--</span>
+                <Gauge size={14} className="text-amber-400" />
+                <span className="text-2xl font-black text-amber-400 italic">{stats.peakSpeed || '--'}</span>
             </div>
+            {stats.peakSpeed && <span className="text-[8px] text-slate-600 font-bold">MPH</span>}
         </div>
       </div>
+
+      {/* Swing Speed Chart — THE metric for golfers */}
+      {stats.speedData.length > 0 && (
+        <div className="bg-gradient-to-br from-amber-500/5 to-orange-600/5 border-2 border-amber-500/20 p-6 rounded-3xl mb-6 shadow-xl relative overflow-hidden">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-xs font-black text-amber-400 uppercase tracking-widest flex items-center gap-2">
+              <Gauge size={14} className="text-amber-500" /> Clubhead Speed
+            </h3>
+            {stats.speedGain !== null && (
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded ${stats.speedGain > 0 ? 'bg-emerald-500/10 text-emerald-400' : stats.speedGain < 0 ? 'bg-red-500/10 text-red-400' : 'bg-slate-700/30 text-slate-500'}`}>
+                {stats.speedGain > 0 ? '+' : ''}{stats.speedGain.toFixed(1)} mph
+              </span>
+            )}
+          </div>
+
+          {/* Latest speed highlight */}
+          <div className="flex items-baseline gap-2 mb-6">
+            <span className="text-4xl font-black text-white italic">{stats.latestSpeed}</span>
+            <span className="text-sm font-black text-amber-500/60">MPH</span>
+            {stats.speedGain !== null && stats.speedGain > 0 && (
+              <span className="text-[10px] font-bold text-emerald-400 ml-2">
+                +{stats.speedGain.toFixed(1)} since first session
+              </span>
+            )}
+          </div>
+
+          {/* Speed line chart */}
+          {stats.speedData.length > 1 && (() => {
+            const speedChartWidth = 320;
+            const speedChartHeight = 100;
+            const speeds = stats.speedData.map(d => d.speed);
+            const minSpeed = Math.min(...speeds) - 2;
+            const maxSpeed = Math.max(...speeds) + 2;
+            const speedRange = maxSpeed - minSpeed || 1;
+
+            const speedPoints = stats.speedData.map((d, i) => {
+              const x = (i / (stats.speedData.length - 1 || 1)) * speedChartWidth;
+              const y = speedChartHeight - ((d.speed - minSpeed) / speedRange) * speedChartHeight;
+              return `${x},${y}`;
+            }).join(' ');
+
+            return (
+              <div className="h-[110px] w-full">
+                <svg viewBox={`0 0 ${speedChartWidth} ${speedChartHeight}`} className="w-full h-full overflow-visible">
+                  <line x1="0" y1="0" x2={speedChartWidth} y2="0" stroke="#334155" strokeWidth="0.5" strokeDasharray="4" />
+                  <line x1="0" y1={speedChartHeight/2} x2={speedChartWidth} y2={speedChartHeight/2} stroke="#334155" strokeWidth="0.5" strokeDasharray="4" />
+                  <line x1="0" y1={speedChartHeight} x2={speedChartWidth} y2={speedChartHeight} stroke="#334155" strokeWidth="1" />
+
+                  <path
+                    d={`M0,${speedChartHeight} L${speedPoints} L${speedChartWidth},${speedChartHeight} Z`}
+                    className="fill-amber-500/10"
+                  />
+                  <polyline
+                    fill="none"
+                    stroke="#f59e0b"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    points={speedPoints}
+                  />
+                  {stats.speedData.map((d, i) => {
+                    const x = (i / (stats.speedData.length - 1 || 1)) * speedChartWidth;
+                    const y = speedChartHeight - ((d.speed - minSpeed) / speedRange) * speedChartHeight;
+                    return <circle key={i} cx={x} cy={y} r="4" className="fill-amber-400 stroke-slate-900 stroke-2" />;
+                  })}
+                </svg>
+              </div>
+            );
+          })()}
+
+          {stats.speedData.length > 1 && (
+            <div className="flex justify-between mt-2 px-1">
+              <span className="text-[8px] font-black text-slate-600 uppercase">{stats.speedData[0].date}</span>
+              <span className="text-[8px] font-black text-slate-600 uppercase">{stats.speedData[stats.speedData.length - 1].date}</span>
+            </div>
+          )}
+
+          {stats.speedData.length === 1 && (
+            <p className="text-[10px] text-slate-500 italic mt-2">
+              Complete more speed sessions to see your trend line.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Volume Chart */}
       <div className="bg-slate-800/40 border border-slate-700 p-6 rounded-3xl mb-6 shadow-xl relative overflow-hidden">
