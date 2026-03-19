@@ -12,6 +12,8 @@ import ProgressView from './components/ProgressView';
 import CompletionModal from './components/CompletionModal';
 import SettingsView from './components/SettingsView';
 import PreferencesView from './components/PreferencesView';
+import FeedbackPage from './components/FeedbackPage';
+import FloatingFeedbackButton from './components/FloatingFeedbackButton';
 import { playBeep } from './utils/audioUtils';
 import { connectToHeartRateDevice } from './services/bleService';
 
@@ -414,14 +416,20 @@ const App: React.FC = () => {
             <PreferencesView onBack={() => setView('settings')} />
           </div>
         )}
+        {view === 'feedback' && (
+          <FeedbackPage onBack={() => setView('dashboard')} />
+        )}
       </main>
 
-      <TimerBar 
-        seconds={timerSeconds} 
-        isActive={timerActive} 
-        onStart={startTimer} 
-        onStop={stopTimer} 
+      <TimerBar
+        seconds={timerSeconds}
+        isActive={timerActive}
+        onStart={startTimer}
+        onStop={stopTimer}
       />
+
+      {/* Floating feedback button - shows on all pages except feedback page */}
+      {view !== 'feedback' && <FloatingFeedbackButton />}
     </div>
   );
 };
