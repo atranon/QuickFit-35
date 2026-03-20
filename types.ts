@@ -16,12 +16,19 @@ export interface PhaseInfo {
   color: string;          // Tailwind color class for UI badges
 }
 
-// Demo data for each exercise — video link, form cue, and metadata
+// Demo data for each exercise — video, form cues, and metadata
+// The video system has a 3-tier fallback:
+//   1. selfHostedUrl (your own GIF/video hosted on Supabase Storage or CDN)
+//   2. youtubeVideoId (specific YouTube video embedded in-app)
+//   3. videoSearchUrl (YouTube search link — opens externally as last resort)
 export interface ExerciseDemo {
-  videoSearchUrl: string;    // YouTube search URL pre-loaded with the exercise name
-  formCue: string;           // One-line coaching cue shown inline (always visible, no tap)
-  muscles: string;           // Target muscles in plain English
-  isGolfSpecific?: boolean;  // Flag for golf-performance exercises
+  videoSearchUrl: string;         // YouTube search URL (Tier 3 fallback)
+  youtubeVideoId?: string;        // Specific YouTube video ID for in-app embed (Tier 2)
+  selfHostedUrl?: string;         // Your own hosted GIF/video URL (Tier 1 — best)
+  formCue: string;                // One-line coaching cue shown inline
+  coachingPoints?: string[];      // 3-5 detailed coaching bullet points for the demo modal
+  muscles: string;                // Target muscles in plain English
+  isGolfSpecific?: boolean;       // Flag for golf-performance exercises
 }
 
 export interface Exercise {
