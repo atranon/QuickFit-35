@@ -19,6 +19,7 @@ import { playBeep } from './utils/audioUtils';
 import { connectToHeartRateDevice } from './services/bleService';
 import { getRecommendedPlan } from './lib/recommendation';
 import { getCurrentPhase, applyPhaseToSchedule } from './lib/phaseEngine';
+import { getTopInsight, INSIGHT_STYLES } from './lib/insightsEngine';
 import { getUserPreferences } from './services/storageService';
 
 const App: React.FC = () => {
@@ -262,56 +263,57 @@ const App: React.FC = () => {
     
     return (
       <div className="pt-20 px-4 max-w-md mx-auto pb-24 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        {/* Personalized Dashboard Header */}
+        {/* Dynamic Insights Card */}
         {(() => {
-            const prefs = getUserPreferences();
-            const history = JSON.parse(localStorage.getItem('workout_history') || '[]');
-            const totalWorkouts = history.length;
+          const insight = getTopInsight();
+          const style = INSIGHT_STYLES[insight.type] || INSIGHT_STYLES['default'];
 
-            let message = '';
-            if (totalWorkouts === 0) {
-                message = prefs?.seasonStatus === 'inseason'
-                    ? "In-season program loaded. Lower volume, max transfer to the course. Let's get your first session in."
-                    : "Your program is ready. First session sets your baseline — pick a weight you can move with perfect form.";
-            } else if (totalWorkouts < 5) {
-                message = `${totalWorkouts} session${totalWorkouts > 1 ? 's' : ''} logged. You're building your baseline. The app learns your strength levels from every set you track.`;
-            } else {
-                const recent = history.slice(-3);
-                const older = history.slice(-6, -3);
-                if (recent.length > 0 && older.length > 0) {
-                    const recentVol = recent.reduce((sum: number, log: any) => sum + log.exercises.reduce((s: number, ex: any) => s + ex.sets.length, 0), 0);
-                    const olderVol = older.reduce((sum: number, log: any) => sum + log.exercises.reduce((s: number, ex: any) => s + ex.sets.length, 0), 0);
-                    if (recentVol > olderVol) {
-                        message = `${totalWorkouts} sessions tracked. Your recent volume is trending up — keep pushing.`;
-                    } else {
-                        message = `${totalWorkouts} sessions tracked. Consistency is the cheat code. Stay the course.`;
-                    }
-                } else {
-                    message = `${totalWorkouts} sessions in the bank. Every rep is data. Every session gets you closer.`;
-                }
-            }
+          // Pick icon based on type
+          const iconMap: Record<string, React.ReactNode> = {
+            flame:   <Activity size={18} className={style.color} />,
+            gauge:   <Zap size={18} className={style.color} />,
+            trophy:  <Trophy size={18} className={style.color} />,
+            trending: <BarChart3 size={18} className={style.color} />,
+            chart:   <BarChart3 size={18} className={style.color} />,
+            zap:     <Zap size={18} className={style.color} />,
+            star:    <Trophy size={18} className={style.color} />,
+            sparkle: <ShieldCheck size={18} className={style.color} />,
+            info:    <ShieldCheck size={18} className={style.color} />,
+          };
+          const icon = iconMap[style.icon] || iconMap['info'];
 
-            const seasonBadge = prefs?.seasonStatus === 'inseason' ? 'In-Season'
-                : prefs?.seasonStatus === 'offseason' ? 'Off-Season Build'
-                : prefs?.seasonStatus === 'preseason' ? 'Pre-Season Ramp'
-                : 'Year-Round';
+          // Pick the label text
+          const labelMap: Record<string, string> = {
+            comeback: 'Welcome Back',
+            speed: 'Speed Intel',
+            pr: 'PR Alert',
+            volume: 'Volume Check',
+            progression: 'Strength Intel',
+            consistency: 'Consistency',
+            milestone: 'Milestone',
+            welcome: 'Getting Started',
+            default: 'Your Progress',
+          };
+          const label = labelMap[insight.type] || 'Insight';
 
-            return (
-                <div className="mb-8 p-4 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-slate-700 shadow-xl">
-                    <div className="flex justify-between items-start mb-3">
-                        <div className="flex items-center gap-2">
-                            <ShieldCheck className="text-emerald-400" size={18} />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Your Program</span>
-                        </div>
-                        <span className="text-[9px] font-black bg-slate-800 text-slate-400 px-2 py-1 rounded-full border border-slate-700 uppercase tracking-tighter">
-                            {seasonBadge}
-                        </span>
-                    </div>
-                    <p className="text-[11px] text-slate-300 font-medium leading-relaxed border-l-2 border-emerald-500/40 pl-3">
-                        {message}
-                    </p>
-                </div>
-            );
+          return (
+            <div className={`mb-8 p-4 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border shadow-xl ${style.borderColor}`}>
+              <div className="flex items-center gap-2 mb-3">
+                {icon}
+                <span className={`text-[10px] font-black uppercase tracking-widest ${style.color}`}>
+                  {label}
+                </span>
+              </div>
+              <p className={`text-[11px] text-slate-300 font-medium leading-relaxed border-l-2 pl-3 ${style.borderColor}`}>
+                {insight.text}
+              </p>
+              {insight.subtext && (
+                <p className="text-[9px] text-slate-600 font-bold mt-2 pl-3 uppercase tracking-widest">
+                  {insight.subtext}
+                </p>
+              )}
+            </div>
+          );
         })()}
 
         {/* Latest Swing Speed — only shows if they've recorded speed data */}
