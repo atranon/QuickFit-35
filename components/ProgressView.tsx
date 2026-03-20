@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { ArrowLeft, TrendingUp, Calendar, Zap, Trophy, BarChart3, ChevronDown, ChevronUp, Info, Gauge } from 'lucide-react';
 import { WorkoutLog, SwingSpeedData } from '../types';
+import { getCurrentPhase } from '../lib/phaseEngine';
 
 interface ProgressViewProps {
   onBack: () => void;
@@ -371,12 +372,33 @@ const ProgressView: React.FC<ProgressViewProps> = ({ onBack }) => {
         )}
       </div>
 
-      <div className="mt-8 p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex gap-3">
-        <Info size={16} className="text-blue-400 shrink-0" />
-        <p className="text-[10px] text-slate-400 leading-relaxed font-medium">
-            Progress is calculated from the final set of each exercise session. Weight stack units (#) are normalized (1# = 10 lbs) for accurate volume and strength profiling.
-        </p>
-      </div>
+      {/* Current Phase Context */}
+      {(() => {
+        const phase = getCurrentPhase();
+        return (
+          <div className={`mt-8 p-4 rounded-2xl flex gap-3 ${
+            phase.phase === 'foundation' ? 'bg-blue-500/5 border border-blue-500/10' :
+            phase.phase === 'build' ? 'bg-purple-500/5 border border-purple-500/10' :
+            phase.phase === 'peak' ? 'bg-amber-500/5 border border-amber-500/10' :
+            'bg-emerald-500/5 border border-emerald-500/10'
+          }`}>
+            <Info size={16} className={`shrink-0 ${
+              phase.phase === 'foundation' ? 'text-blue-400' :
+              phase.phase === 'build' ? 'text-purple-400' :
+              phase.phase === 'peak' ? 'text-amber-400' :
+              'text-emerald-400'
+            }`} />
+            <div>
+              <p className="text-[10px] text-slate-300 font-bold mb-1">
+                Currently in {phase.label} (Cycle {phase.cycleNumber})
+              </p>
+              <p className="text-[10px] text-slate-500 leading-relaxed font-medium">
+                {phase.description} Volume fluctuations between weeks are intentional — the 4-week cycle (Foundation → Build → Peak → Deload) is how your body adapts and gets stronger.
+              </p>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };
