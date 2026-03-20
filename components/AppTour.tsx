@@ -101,28 +101,46 @@ const AppTour: React.FC<AppTourProps> = ({ steps, tourKey, onComplete, delay = 6
   if (hasTarget) {
     const centerX = targetRect.left + targetRect.width / 2;
     const tooltipWidth = 280;
+    const tooltipHeight = 280; // Approximate height for positioning
+
+    // Smart vertical positioning - keep tooltip on screen
+    let topPosition = targetRect.bottom + padding + 12;
+
+    // If tooltip would go off bottom of screen, position it above the target instead
+    if (topPosition + tooltipHeight > window.innerHeight - 20) {
+      topPosition = Math.max(20, targetRect.top - tooltipHeight - padding - 12);
+    }
+
+    // Ensure tooltip doesn't go off top of screen
+    topPosition = Math.max(20, Math.min(topPosition, window.innerHeight - tooltipHeight - 20));
 
     if (pos === 'bottom') {
       tooltipStyle = {
         position: 'fixed',
-        top: targetRect.bottom + padding + 12,
+        top: topPosition,
         left: Math.max(16, Math.min(centerX - tooltipWidth / 2, window.innerWidth - tooltipWidth - 16)),
         width: tooltipWidth,
+        maxHeight: `${window.innerHeight - 40}px`,
+        overflowY: 'auto',
       };
     } else if (pos === 'top') {
       tooltipStyle = {
         position: 'fixed',
-        bottom: window.innerHeight - targetRect.top + padding + 12,
+        bottom: Math.max(20, window.innerHeight - targetRect.top + padding + 12),
         left: Math.max(16, Math.min(centerX - tooltipWidth / 2, window.innerWidth - tooltipWidth - 16)),
         width: tooltipWidth,
+        maxHeight: `${window.innerHeight - 40}px`,
+        overflowY: 'auto',
       };
     } else {
       // Default to bottom for left/right on mobile (screen too narrow for side tooltips)
       tooltipStyle = {
         position: 'fixed',
-        top: targetRect.bottom + padding + 12,
+        top: topPosition,
         left: Math.max(16, Math.min(centerX - tooltipWidth / 2, window.innerWidth - tooltipWidth - 16)),
         width: tooltipWidth,
+        maxHeight: `${window.innerHeight - 40}px`,
+        overflowY: 'auto',
       };
     }
   } else {
@@ -133,12 +151,15 @@ const AppTour: React.FC<AppTourProps> = ({ steps, tourKey, onComplete, delay = 6
       left: '50%',
       transform: 'translate(-50%, -50%)',
       width: 300,
+      maxHeight: `${window.innerHeight - 40}px`,
+      overflowY: 'auto',
     };
   }
 
   return (
     <div className="fixed inset-0 z-[200]" style={{ pointerEvents: 'auto' }}>
       {/* Dark overlay — uses an SVG with a cutout for the spotlight */}
+      {/* Click outside to dismiss */}
       <svg className="fixed inset-0 w-full h-full" style={{ pointerEvents: 'none' }}>
         <defs>
           <mask id="tour-spotlight-mask">
@@ -160,10 +181,19 @@ const AppTour: React.FC<AppTourProps> = ({ steps, tourKey, onComplete, delay = 6
           x="0" y="0" width="100%" height="100%"
           fill="rgba(2, 6, 23, 0.85)"
           mask="url(#tour-spotlight-mask)"
-          style={{ pointerEvents: 'auto' }}
-          onClick={(e) => e.stopPropagation()}
+          style={{ pointerEvents: 'auto', cursor: 'pointer' }}
+          onClick={handleFinish}
         />
       </svg>
+
+      {/* Fixed escape button - always visible in top-right corner */}
+      <button
+        onClick={handleFinish}
+        className="fixed top-4 right-4 z-[202] bg-slate-800 hover:bg-slate-700 border-2 border-slate-600 hover:border-slate-500 text-white p-3 rounded-full shadow-2xl transition-all active:scale-95"
+        aria-label="Skip tour"
+      >
+        <X size={20} />
+      </button>
 
       {/* Spotlight ring — glowing border around the target element */}
       {hasTarget && (
@@ -184,6 +214,7 @@ const AppTour: React.FC<AppTourProps> = ({ steps, tourKey, onComplete, delay = 6
         ref={tooltipRef}
         className="bg-slate-800 border-2 border-blue-500/50 rounded-2xl shadow-2xl shadow-blue-500/20 p-5 animate-in fade-in slide-in-from-bottom-4 duration-300"
         style={{ ...tooltipStyle, zIndex: 201, pointerEvents: 'auto' }}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Step counter and skip */}
         <div className="flex justify-between items-center mb-3">
