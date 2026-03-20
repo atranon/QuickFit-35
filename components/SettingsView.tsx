@@ -84,6 +84,31 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack, onReset, onShowTuto
           </div>
         </div>
 
+        {/* Reset Workout Tour */}
+        <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-slate-700 bg-slate-800/30">
+            <h3 className="font-bold text-white flex items-center gap-2">
+              <BookOpen size={18} className="text-blue-400" />
+              Workout Tour
+            </h3>
+          </div>
+          <div className="p-4">
+            <p className="text-sm text-slate-400 mb-4">
+              See the interactive workout guide again. Next time you open a workout, the tour will play.
+            </p>
+            <button
+              onClick={() => {
+                localStorage.removeItem('workout_tour_seen');
+                alert('Workout tour reset! Open any workout to see the guide.');
+              }}
+              className="w-full bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition border border-blue-500/30"
+            >
+              <BookOpen size={18} />
+              Reset Workout Tour
+            </button>
+          </div>
+        </div>
+
         {/* Mobility Assessment */}
         {onShowAssessment && (
           <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">

@@ -154,8 +154,9 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
           }
         }
 
-        // Show tour for first-time users (no workout history)
-        if (parsed.length === 0) {
+        // Show tour if user hasn't seen it yet
+        const tourSeen = localStorage.getItem('workout_tour_seen');
+        if (!tourSeen) {
           setShowTour(true);
         }
       }
