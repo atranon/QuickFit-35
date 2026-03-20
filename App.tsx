@@ -467,34 +467,48 @@ const App: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex justify-between items-end mb-6 px-1">
-          <div>
-            <h2 className="text-2xl font-black text-white mb-1 uppercase tracking-tight italic">Schedule</h2>
-            <div className="flex items-center gap-1.5">
-              <span className={`text-[9px] font-black text-white px-2 py-0.5 rounded-full uppercase tracking-widest ${selectedProgram === 'golf' ? 'bg-emerald-600' : 'bg-indigo-600'}`}>
-                {selectedProgram === 'golf' ? 'Golf Speed' : 'Powerbuilding'}
-              </span>
-              <span className="text-[9px] font-black text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded-full uppercase tracking-widest border border-slate-700">
-                {selectedPlan}
-              </span>
+        <div className="mb-6 px-1">
+          <div className="flex justify-between items-end mb-3">
+            <div>
+              <h2 className="text-2xl font-black text-white mb-1 uppercase tracking-tight italic">Schedule</h2>
+              <div className="flex items-center gap-1.5">
+                <span className={`text-[9px] font-black text-white px-2 py-0.5 rounded-full uppercase tracking-widest ${selectedProgram === 'golf' ? 'bg-emerald-600' : 'bg-indigo-600'}`}>
+                  {selectedProgram === 'golf' ? 'Golf Speed' : 'Powerbuilding'}
+                </span>
+                <span className="text-[9px] font-black text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded-full uppercase tracking-widest border border-slate-700">
+                  {selectedPlan}
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                  onClick={() => setView('onboarding')}
+                  className="bg-slate-800 p-2.5 rounded-xl text-blue-400 hover:text-white transition active:scale-95 border border-slate-700 shadow-lg"
+                  title="Restart Tutorial"
+              >
+                  <BookOpen size={20} />
+              </button>
+              <button
+                  onClick={() => setView('plan-selection')}
+                  className="bg-slate-800 p-2.5 rounded-xl text-slate-400 hover:text-white transition active:scale-95 border border-slate-700 shadow-lg"
+                  title="Change Frequency"
+              >
+                  <Sliders size={20} />
+              </button>
             </div>
           </div>
-          <div className="flex gap-2">
-            <button 
-                onClick={() => setView('onboarding')}
-                className="bg-slate-800 p-2.5 rounded-xl text-blue-400 hover:text-white transition active:scale-95 border border-slate-700 shadow-lg"
-                title="Restart Tutorial"
-            >
-                <BookOpen size={20} />
-            </button>
-            <button 
-                onClick={() => setView('plan-selection')}
-                className="bg-slate-800 p-2.5 rounded-xl text-slate-400 hover:text-white transition active:scale-95 border border-slate-700 shadow-lg"
-                title="Change Frequency"
-            >
-                <Sliders size={20} />
-            </button>
-          </div>
+
+          {/* Compare frequencies button */}
+          <button
+            onClick={() => setView('plan-selection')}
+            className="w-full bg-slate-800/40 border border-slate-700/70 rounded-xl px-4 py-2.5 text-left hover:bg-slate-800 hover:border-slate-600 transition-all group flex items-center justify-between"
+          >
+            <div className="flex items-center gap-2.5">
+              <Sliders size={14} className="text-slate-500 group-hover:text-emerald-400 transition" />
+              <span className="text-[11px] font-bold text-slate-400 group-hover:text-slate-300 uppercase tracking-wide">Compare Frequencies</span>
+            </div>
+            <ChevronRight size={14} className="text-slate-600 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
+          </button>
         </div>
         
         <div className="grid gap-4">
