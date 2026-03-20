@@ -6,6 +6,7 @@ import { generateFormDescription, generateWorkoutRoutine } from '../services/gem
 import GeminiModal from './GeminiModal';
 import VideoModal from './VideoModal';
 import ExerciseDemoModal from './ExerciseDemoModal';
+import AppTour, { TourStep } from './AppTour';
 import { triggerBackgroundSync } from '../services/storageService';
 import { getExerciseDemo, getFallbackVideoUrl } from '../constants/exerciseDemos';
 import { getExerciseAlternatives } from '../constants/exerciseAlternatives';
@@ -54,12 +55,57 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
   const [swapExerciseId, setSwapExerciseId] = useState('');
   const [swapExerciseName, setSwapExerciseName] = useState('');
 
-  const [showTutorial, setShowTutorial] = useState(false);
-
   // Swing speed tracking — only used when the workout has speed exercises
   const hasSpeedWork = schedule.exercises.some(e => e.type === 'speed');
+
+  // Interactive workout tour — walks through the set-logging flow
+  const WORKOUT_TOUR_STEPS: TourStep[] = [
+    {
+      target: '[data-tour="warmup-section"]',
+      title: 'Start with Your Warm-Up',
+      description: 'Every workout begins with a warm-up. Expand this section and work through the movements before hitting the weights. It adapts to your mobility assessment.',
+      position: 'bottom',
+    },
+    {
+      target: '[data-tour="exercise-name"]',
+      title: 'Your Exercises',
+      description: 'Each exercise shows the name, target muscles, and a form cue. Tap the red ▶ to watch a demo video, or the ⓘ for AI coaching tips.',
+      position: 'bottom',
+    },
+    {
+      target: '[data-tour="weight-input"]',
+      title: 'Step 1: Enter Weight',
+      description: 'Type the weight you\'re using. The grey placeholder shows your last session\'s weight as a reference. Tap "lbs" to switch to plate stack (#) notation.',
+      position: 'bottom',
+    },
+    {
+      target: '[data-tour="reps-input"]',
+      title: 'Step 2: Enter Reps',
+      description: 'How many reps did you complete? The placeholder shows the target rep count for this exercise.',
+      position: 'bottom',
+    },
+    {
+      target: '[data-tour="rpe-input"]',
+      title: 'Step 3: Rate Your Effort (RPE)',
+      description: 'RPE = Rate of Perceived Exertion. Scale of 1-10. A "7" means you had 3 reps left in the tank. An "8" means 2 left. A "10" means total failure. Most sets should be RPE 7-8.',
+      position: 'bottom',
+    },
+    {
+      target: '[data-tour="complete-btn"]',
+      title: 'Step 4: Complete the Set',
+      description: 'Tap the checkmark to log the set. This saves your data, starts the rest timer automatically, and tracks PRs. The inputs turn green when complete.',
+      position: 'top',
+    },
+    {
+      target: '[data-tour="finish-btn"]',
+      title: 'Finish Your Workout',
+      description: 'When all sets are done, tap "Complete & Sync" to save your session. Add any notes first if you want (fatigue level, gear used, how you felt). Your data syncs to the cloud automatically.',
+      position: 'top',
+    },
+  ];
   const [swingSpeed, setSwingSpeed] = useState<SwingSpeedData>({});
   const [showSpeedInput, setShowSpeedInput] = useState(hasSpeedWork);
+  const [showTour, setShowTour] = useState(false);
 
   // Warm-up and cool-down state
   const [showWarmUp, setShowWarmUp] = useState(true);
@@ -108,16 +154,9 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
           }
         }
 
-        // Check if we should show the tutorial
-        const tutorialSeen = localStorage.getItem('workout_tutorial_seen');
-        if (parsed.length === 0 && !tutorialSeen) {
-          setShowTutorial(true);
-        }
-      } else {
-        // No history at all, definitely show tutorial
-        const tutorialSeen = localStorage.getItem('workout_tutorial_seen');
-        if (!tutorialSeen) {
-          setShowTutorial(true);
+        // Show tour for first-time users (no workout history)
+        if (parsed.length === 0) {
+          setShowTour(true);
         }
       }
     } catch (e) {
@@ -363,6 +402,7 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
           <div className={`flex items-center ${isSplit ? 'gap-1' : 'gap-2'}`}>
             <div className="relative flex-1 min-w-0">
                 <input
+                data-tour="weight-input"
                 type="text" inputMode="decimal" placeholder={placeholderWeight} value={val.weight}
                 onChange={(e) => handleInputChange(ex.id, i, 'weight', e.target.value)}
                 className={`bg-slate-900/60 border leading-none transition-all duration-300 ${isAchievement ? 'border-emerald-500 text-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.2)]' : isComplete ? 'border-green-500/50 text-green-400' : 'border-slate-700 text-white'} rounded w-full py-1.5 ${isSplit ? 'pl-1.5 pr-6 text-sm' : 'pl-3 pr-10 text-lg'} font-black focus:outline-none focus:border-blue-500 placeholder:text-slate-800`}
@@ -376,6 +416,7 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
             </div>
             <div className={`${isSplit ? 'w-10' : 'w-16'}`}>
                 <input
+                data-tour="reps-input"
                 type="text" inputMode="text" placeholder={placeholderReps} value={val.reps}
                 onChange={(e) => handleInputChange(ex.id, i, 'reps', e.target.value)}
                 className={`bg-slate-900/60 border leading-none transition-all duration-300 ${isAchievement ? 'border-emerald-500 text-emerald-300' : isComplete ? 'border-green-500/50 text-green-400' : 'border-slate-700 text-white'} rounded w-full py-1.5 text-center ${isSplit ? 'text-sm' : 'text-lg'} font-black focus:outline-none focus:border-blue-500 placeholder:text-slate-800`}
@@ -383,12 +424,14 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
             </div>
             <div className={`${isSplit ? 'w-10' : 'w-16'}`}>
                 <input
+                data-tour="rpe-input"
                 type="text" inputMode="decimal" placeholder={placeholderRPE} value={val.rpe}
                 onChange={(e) => handleInputChange(ex.id, i, 'rpe', e.target.value)}
                 className={`bg-slate-900/60 border leading-none transition-all duration-300 ${isComplete ? 'border-green-500/50 text-green-400' : 'border-slate-700 text-white'} rounded w-full py-1.5 text-center ${isSplit ? 'text-sm' : 'text-lg'} font-black focus:outline-none focus:border-blue-500 placeholder:text-slate-800`}
                 />
             </div>
             <button
+                data-tour="complete-btn"
                 onClick={() => toggleComplete(ex.id, i, val.weight || placeholderWeight, val.reps || placeholderReps)}
                 className={`${isSplit ? 'w-7 h-7' : 'w-10 h-10'} rounded flex items-center justify-center transition-all ${isAchievement ? 'bg-emerald-500 text-white' : isComplete ? 'bg-green-600 text-white scale-95' : 'bg-slate-700 text-slate-500 hover:bg-slate-600'}`}
             >
@@ -418,11 +461,6 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
       setSyncStatus('idle');
       alert("Sync failed. Check credentials.");
     }
-  };
-
-  const dismissTutorial = () => {
-    setShowTutorial(false);
-    localStorage.setItem('workout_tutorial_seen', 'true');
   };
 
   const openDemoModal = (exerciseName: string) => {
@@ -601,7 +639,7 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
 
       <div className="grid gap-6">
         {/* Built-in Warm-Up Section */}
-        <div className="bg-slate-800/30 border border-emerald-500/20 rounded-2xl overflow-hidden">
+        <div data-tour="warmup-section" className="bg-slate-800/30 border border-emerald-500/20 rounded-2xl overflow-hidden">
           <button
             onClick={() => setShowWarmUp(!showWarmUp)}
             className="w-full px-4 py-3 flex justify-between items-center hover:bg-slate-800/50 transition"
@@ -668,7 +706,7 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
                         <div className="flex justify-between items-start mb-1">
                           <div className="flex-1 mr-1 min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <input type="text" value={currentName} onChange={(e) => handleNameChange(ex.id, e.target.value)} className="bg-transparent border-none p-0 text-xs font-black text-blue-400 focus:ring-0 flex-1 min-w-0 truncate" />
+                              <input data-tour="exercise-name" type="text" value={currentName} onChange={(e) => handleNameChange(ex.id, e.target.value)} className="bg-transparent border-none p-0 text-xs font-black text-blue-400 focus:ring-0 flex-1 min-w-0 truncate" />
                               {demo?.isGolfSpecific && (
                                 <span className="text-[7px] font-black bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded shrink-0 uppercase tracking-tighter">Golf</span>
                               )}
@@ -880,10 +918,19 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
         <div className="bg-slate-800/30 p-4 rounded-xl border border-slate-700">
           <textarea value={notes} onChange={(e) => { setNotes(e.target.value); localStorage.setItem(`workout_notes_${dayKey}`, e.target.value); }} placeholder="Fatigue? Focus cues? Gear used?" className="w-full bg-slate-900/50 border border-slate-700 rounded p-3 text-xs text-slate-400 h-24 resize-none placeholder:text-slate-700" />
         </div>
-        <button onClick={handleFinish} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl shadow-2xl flex items-center justify-center gap-2 transition active:scale-95 uppercase tracking-widest text-xs">
+        <button data-tour="finish-btn" onClick={handleFinish} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl shadow-2xl flex items-center justify-center gap-2 transition active:scale-95 uppercase tracking-widest text-xs">
           <Check size={18} strokeWidth={4} /> Complete & Sync Session
         </button>
       </div>
+
+      {/* Interactive Tour for First-Time Users */}
+      {showTour && (
+        <AppTour
+          steps={WORKOUT_TOUR_STEPS}
+          tourKey="workout_tour_seen"
+          onComplete={() => setShowTour(false)}
+        />
+      )}
     </div>
   );
 };
