@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Trophy, Scale, Zap, Save, CheckCircle } from 'lucide-react';
-import { FitnessLevel, PrimaryGoal, WeightUnit, TrainingExperience, UserPreferences } from '../types';
+import { ArrowLeft, User, Trophy, Scale, Zap, Save, CheckCircle, Dumbbell } from 'lucide-react';
+import { FitnessLevel, PrimaryGoal, WeightUnit, TrainingExperience, UserPreferences, EquipmentAccess } from '../types';
 import { getUserPreferences, saveUserPreferences } from '../services/storageService';
 
 interface PreferencesViewProps {
@@ -195,6 +195,47 @@ const PreferencesView: React.FC<PreferencesViewProps> = ({ onBack }) => {
                 </button>
               );
             })}
+          </div>
+        </div>
+
+        {/* Equipment Access */}
+        <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-slate-700 bg-slate-800/30">
+            <h3 className="font-bold text-white flex items-center gap-2">
+              <Dumbbell size={18} className="text-orange-400" />
+              Equipment Access
+            </h3>
+          </div>
+          <div className="p-4">
+            <p className="text-xs text-slate-500 mb-3">
+              This adapts every exercise in your program to match your equipment. You can change it anytime.
+            </p>
+            <div className="grid gap-2">
+              {[
+                { value: 'full-gym', label: 'Full Gym', desc: 'Barbells, cables, machines, racks' },
+                { value: 'home-dumbbells', label: 'Home — Dumbbells', desc: 'Dumbbells, bench (optional), bands' },
+                { value: 'bands-only', label: 'Bands & Bodyweight', desc: 'Resistance bands, door anchor, bodyweight' },
+                { value: 'no-equipment', label: 'Bodyweight Only', desc: 'No equipment at all' },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => updatePreference('equipmentAccess' as any, opt.value)}
+                  className={`text-left p-3 rounded-xl border-2 transition-all ${
+                    (preferences as any).equipmentAccess === opt.value || (!((preferences as any).equipmentAccess) && opt.value === 'full-gym')
+                      ? 'bg-orange-600/20 border-orange-500/50 shadow-lg'
+                      : 'bg-slate-800/30 border-slate-700 hover:border-slate-500'
+                  }`}
+                >
+                  <span className={`block text-sm font-black uppercase italic tracking-tight ${
+                    (preferences as any).equipmentAccess === opt.value || (!((preferences as any).equipmentAccess) && opt.value === 'full-gym')
+                      ? 'text-white' : 'text-slate-300'
+                  }`}>
+                    {opt.label}
+                  </span>
+                  <span className="text-[10px] text-slate-500">{opt.desc}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
