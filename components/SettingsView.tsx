@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Cloud, BookOpen, Mail, Info, Trash2, AlertCircle, User, RefreshCw, Bug, LogOut } from 'lucide-react';
+import { ArrowLeft, Cloud, BookOpen, Mail, Info, Trash2, AlertCircle, User, RefreshCw, Bug, LogOut, Activity } from 'lucide-react';
 import SyncModal from './SyncModal';
 import * as Sentry from '@sentry/react';
 import { getCurrentUser, signOut as supabaseSignOut } from '../services/supabaseSync';
@@ -10,9 +10,10 @@ interface SettingsViewProps {
   onReset: () => void;
   onShowTutorial: () => void;
   onShowPreferences?: () => void;
+  onShowAssessment?: () => void;
 }
 
-const SettingsView: React.FC<SettingsViewProps> = ({ onBack, onReset, onShowTutorial, onShowPreferences }) => {
+const SettingsView: React.FC<SettingsViewProps> = ({ onBack, onReset, onShowTutorial, onShowPreferences, onShowAssessment }) => {
   const [isSyncOpen, setIsSyncOpen] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(null);
 
@@ -82,6 +83,35 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack, onReset, onShowTuto
             </button>
           </div>
         </div>
+
+        {/* Mobility Assessment */}
+        {onShowAssessment && (
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-700 bg-slate-800/30">
+              <h3 className="font-bold text-white flex items-center gap-2">
+                <Activity size={18} className="text-purple-400" />
+                Mobility Assessment
+              </h3>
+            </div>
+            <div className="p-4">
+              <p className="text-sm text-slate-400 mb-4">
+                Take a 3-minute movement screening to identify limitations and get targeted corrective exercises in your warm-ups.
+              </p>
+              <button
+                onClick={onShowAssessment}
+                className="w-full bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition border border-purple-500/30"
+              >
+                <Activity size={18} />
+                {(() => {
+                  try {
+                    const a = localStorage.getItem('mobility_assessment');
+                    return a ? 'Retake Assessment' : 'Take Assessment';
+                  } catch { return 'Take Assessment'; }
+                })()}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* User Preferences Section */}
         {onShowPreferences && (

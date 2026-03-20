@@ -23,6 +23,8 @@ import { getTopInsight, INSIGHT_STYLES } from './lib/insightsEngine';
 import { onAuthChange, pushBackup, getCurrentUser } from './services/supabaseSync';
 import type { User } from '@supabase/supabase-js';
 import { getUserPreferences } from './services/storageService';
+import MobilityAssessmentView from './components/MobilityAssessmentView';
+import { getAssessment, shouldReassess } from './constants/mobilityAssessment';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewState>(() => {
@@ -345,6 +347,64 @@ const App: React.FC = () => {
           );
         })()}
 
+        {/* Mobility Assessment Prompt / Flags */}
+        {(() => {
+          const assessment = getAssessment();
+          const needsReassess = shouldReassess();
+
+          if (!assessment) {
+            // Never taken the assessment — show a prompt
+            return (
+              <div
+                onClick={() => setView('assessment')}
+                className="mb-6 p-4 bg-purple-500/10 border border-purple-500/30 rounded-2xl cursor-pointer hover:bg-purple-500/15 transition group"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Activity size={18} className="text-purple-400" />
+                    <div>
+                      <p className="text-xs font-black text-purple-300 uppercase tracking-tight">Mobility Check Available</p>
+                      <p className="text-[10px] text-slate-500">5 tests, 3 minutes. Find what's limiting your swing.</p>
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-purple-500 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+            );
+          }
+
+          if (needsReassess) {
+            return (
+              <div
+                onClick={() => setView('assessment')}
+                className="mb-6 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl cursor-pointer hover:bg-amber-500/15 transition"
+              >
+                <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">
+                  Time to reassess — it's been 4+ weeks since your last mobility check
+                </p>
+              </div>
+            );
+          }
+
+          // Show flags if they exist
+          if (assessment.flags.length > 0) {
+            return (
+              <div className="mb-6 flex flex-wrap gap-1.5">
+                {assessment.flags.slice(0, 3).map((flag, i) => (
+                  <span key={i} className={`text-[8px] font-black px-2 py-1 rounded-full ${
+                    flag.severity === 'limitation' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                  }`}>
+                    {flag.area}
+                  </span>
+                ))}
+                <span className="text-[8px] font-bold text-slate-600 px-2 py-1">addressed in warm-up</span>
+              </div>
+            );
+          }
+
+          return null;
+        })()}
+
         {/* Latest Swing Speed — only shows if they've recorded speed data */}
         {(() => {
           const history = JSON.parse(localStorage.getItem('workout_history') || '[]');
@@ -407,34 +467,48 @@ const App: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex justify-between items-end mb-6 px-1">
-          <div>
-            <h2 className="text-2xl font-black text-white mb-1 uppercase tracking-tight italic">Schedule</h2>
-            <div className="flex items-center gap-1.5">
-              <span className={`text-[9px] font-black text-white px-2 py-0.5 rounded-full uppercase tracking-widest ${selectedProgram === 'golf' ? 'bg-emerald-600' : 'bg-indigo-600'}`}>
-                {selectedProgram === 'golf' ? 'Golf Speed' : 'Powerbuilding'}
-              </span>
-              <span className="text-[9px] font-black text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded-full uppercase tracking-widest border border-slate-700">
-                {selectedPlan}
-              </span>
+        <div className="mb-6 px-1">
+          <div className="flex justify-between items-end mb-3">
+            <div>
+              <h2 className="text-2xl font-black text-white mb-1 uppercase tracking-tight italic">Schedule</h2>
+              <div className="flex items-center gap-1.5">
+                <span className={`text-[9px] font-black text-white px-2 py-0.5 rounded-full uppercase tracking-widest ${selectedProgram === 'golf' ? 'bg-emerald-600' : 'bg-indigo-600'}`}>
+                  {selectedProgram === 'golf' ? 'Golf Speed' : 'Powerbuilding'}
+                </span>
+                <span className="text-[9px] font-black text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded-full uppercase tracking-widest border border-slate-700">
+                  {selectedPlan}
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                  onClick={() => setView('onboarding')}
+                  className="bg-slate-800 p-2.5 rounded-xl text-blue-400 hover:text-white transition active:scale-95 border border-slate-700 shadow-lg"
+                  title="Restart Tutorial"
+              >
+                  <BookOpen size={20} />
+              </button>
+              <button
+                  onClick={() => setView('plan-selection')}
+                  className="bg-slate-800 p-2.5 rounded-xl text-slate-400 hover:text-white transition active:scale-95 border border-slate-700 shadow-lg"
+                  title="Change Frequency"
+              >
+                  <Sliders size={20} />
+              </button>
             </div>
           </div>
-          <div className="flex gap-2">
-            <button 
-                onClick={() => setView('onboarding')}
-                className="bg-slate-800 p-2.5 rounded-xl text-blue-400 hover:text-white transition active:scale-95 border border-slate-700 shadow-lg"
-                title="Restart Tutorial"
-            >
-                <BookOpen size={20} />
-            </button>
-            <button 
-                onClick={() => setView('plan-selection')}
-                className="bg-slate-800 p-2.5 rounded-xl text-slate-400 hover:text-white transition active:scale-95 border border-slate-700 shadow-lg"
-                title="Change Frequency"
-            >
-                <Sliders size={20} />
-            </button>
-          </div>
+
+          {/* Compare frequencies button */}
+          <button
+            onClick={() => setView('plan-selection')}
+            className="w-full bg-slate-800/40 border border-slate-700/70 rounded-xl px-4 py-2.5 text-left hover:bg-slate-800 hover:border-slate-600 transition-all group flex items-center justify-between"
+          >
+            <div className="flex items-center gap-2.5">
+              <Sliders size={14} className="text-slate-500 group-hover:text-emerald-400 transition" />
+              <span className="text-[11px] font-bold text-slate-400 group-hover:text-slate-300 uppercase tracking-wide">Compare Frequencies</span>
+            </div>
+            <ChevronRight size={14} className="text-slate-600 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
+          </button>
         </div>
         
         <div className="grid gap-4">
@@ -593,7 +667,13 @@ const App: React.FC = () => {
               onReset={handleReset}
               onShowTutorial={() => setView('onboarding')}
               onShowPreferences={() => setView('preferences')}
+              onShowAssessment={() => setView('assessment')}
             />
+          </div>
+        )}
+        {view === 'assessment' && (
+          <div className="pt-20 px-4 max-w-md mx-auto">
+            <MobilityAssessmentView onBack={() => setView('settings')} onComplete={() => {}} />
           </div>
         )}
         {view === 'preferences' && (
