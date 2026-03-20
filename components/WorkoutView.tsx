@@ -4,6 +4,7 @@ import { ArrowLeft, Columns, List, Sparkles, Clock, Check, Info, StickyNote, Tre
 import { DaySchedule, Exercise, WorkoutLog, SetData, SwingSpeedData } from '../types';
 import { generateFormDescription, generateWorkoutRoutine } from '../services/geminiService';
 import GeminiModal from './GeminiModal';
+import VideoModal from './VideoModal';
 import { triggerBackgroundSync } from '../services/storageService';
 import { getExerciseDemo, getFallbackVideoUrl } from '../constants/exerciseDemos';
 
@@ -33,6 +34,12 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
   const [isModalLoading, setIsModalLoading] = useState(false);
   const [modalVideoUrl, setModalVideoUrl] = useState<string | undefined>(undefined);
   const [modalIsGolfSpecific, setModalIsGolfSpecific] = useState(false);
+
+  // Video modal state
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [videoModalUrl, setVideoModalUrl] = useState('');
+  const [videoModalExercise, setVideoModalExercise] = useState('');
+
   const [showTutorial, setShowTutorial] = useState(false);
 
   // Swing speed tracking — only used when the workout has speed exercises
@@ -400,7 +407,31 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
 
   return (
     <div className="pb-32 animate-in fade-in duration-500">
-      <GeminiModal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={modalTitle} content={modalContent} textContent={modalTextForTTS} loading={isModalLoading} videoUrl={modalVideoUrl} isGolfSpecific={modalIsGolfSpecific} />
+      <GeminiModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={modalTitle}
+        content={modalContent}
+        textContent={modalTextForTTS}
+        loading={isModalLoading}
+        videoUrl={modalVideoUrl}
+        isGolfSpecific={modalIsGolfSpecific}
+        onOpenVideo={() => {
+          if (modalVideoUrl) {
+            setVideoModalUrl(modalVideoUrl);
+            setVideoModalExercise(modalTitle.replace(' - Technical Check', ''));
+            setVideoModalOpen(true);
+            setModalOpen(false); // Close the info modal when opening video
+          }
+        }}
+      />
+
+      <VideoModal
+        isOpen={videoModalOpen}
+        onClose={() => setVideoModalOpen(false)}
+        videoUrl={videoModalUrl}
+        exerciseName={videoModalExercise}
+      />
 
       {/* First Time Tutorial Overlay */}
       {showTutorial && (
@@ -519,16 +550,18 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
                             </div>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
-                            {/* Video demo button — opens YouTube in new tab */}
-                            <a
-                              href={demo?.videoSearchUrl || getFallbackVideoUrl(currentName)}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            {/* Video demo button — opens video modal */}
+                            <button
+                              onClick={() => {
+                                setVideoModalUrl(demo?.videoSearchUrl || getFallbackVideoUrl(currentName));
+                                setVideoModalExercise(currentName);
+                                setVideoModalOpen(true);
+                              }}
                               className="text-red-500/60 hover:text-red-400 transition p-0.5"
                               title="Watch Demo"
                             >
                               <Play size={12} fill="currentColor" />
-                            </a>
+                            </button>
                             <button onClick={() => onStartTimer(ex.rest)} title="Rest" className="text-slate-600 hover:text-amber-500 transition p-0.5"><Timer size={12} /></button>
                             <button onClick={() => openFormCheck(ex.id, ex.name, ex.defaultCategory)} className="text-slate-600 hover:text-blue-400 transition p-0.5"><Info size={12} /></button>
                           </div>

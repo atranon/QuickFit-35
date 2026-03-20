@@ -9,11 +9,12 @@ interface GeminiModalProps {
   content: React.ReactNode;
   textContent?: string;
   loading: boolean;
-  videoUrl?: string;          // NEW: YouTube search URL for this exercise
-  isGolfSpecific?: boolean;   // NEW: flag for golf-specific badge
+  videoUrl?: string;          // YouTube search URL for this exercise
+  isGolfSpecific?: boolean;   // flag for golf-specific badge
+  onOpenVideo?: () => void;   // Callback to open video modal
 }
 
-const GeminiModal: React.FC<GeminiModalProps> = ({ isOpen, onClose, title, content, textContent, loading, videoUrl, isGolfSpecific }) => {
+const GeminiModal: React.FC<GeminiModalProps> = ({ isOpen, onClose, title, content, textContent, loading, videoUrl, isGolfSpecific, onOpenVideo }) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -90,17 +91,14 @@ const GeminiModal: React.FC<GeminiModalProps> = ({ isOpen, onClose, title, conte
         </div>
 
         {/* Video Demo Button — PRIMARY action, shown first */}
-        {videoUrl && (
-          <a
-            href={videoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+        {videoUrl && onOpenVideo && (
+          <button
+            onClick={onOpenVideo}
             className="w-full mb-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition shadow-lg shadow-red-500/20 active:scale-[0.98]"
           >
             <Play size={18} fill="currentColor" />
-            Watch Demo on YouTube
-            <ExternalLink size={14} className="opacity-60" />
-          </a>
+            Watch Demo Video
+          </button>
         )}
 
         {/* AI-Generated Form Tips */}
