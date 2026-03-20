@@ -97,7 +97,7 @@ export interface LastStats {
     date: string;
 }
 
-export type ViewState = 'dashboard' | 'workout' | 'history' | 'progress' | 'settings' | 'preferences' | 'plan-selection' | 'onboarding' | 'feedback';
+export type ViewState = 'dashboard' | 'workout' | 'history' | 'progress' | 'settings' | 'preferences' | 'plan-selection' | 'onboarding' | 'feedback' | 'assessment';
 
 export interface SyncConfig {
   apiKey: string;
@@ -143,4 +143,36 @@ export interface UserPreferences {
   seasonStatus?: SeasonStatus;
   equipmentAccess?: EquipmentAccess;
   playerName?: string;
+}
+
+// Mobility assessment — TPI-lite self-screening
+export type MobilityScore = 'pass' | 'partial' | 'fail';
+export type MobilityTestId = 'overhead_squat' | 'trunk_rotation' | 'toe_touch' | 'single_leg_balance' | 'pelvic_tilt';
+
+export interface MobilityResult {
+  testId: MobilityTestId;
+  score: MobilityScore;
+  side?: 'left' | 'right' | 'both';  // Some tests are bilateral
+}
+
+export interface MobilityAssessmentData {
+  results: MobilityResult[];
+  completedAt: number;
+  // Derived flags — calculated when assessment is completed
+  flags: MobilityFlag[];
+}
+
+export interface MobilityFlag {
+  area: string;           // e.g., "Hip Mobility", "Thoracic Rotation"
+  severity: 'warning' | 'limitation';  // warning = partial, limitation = fail
+  message: string;        // e.g., "Limited hip rotation may restrict backswing turn"
+  correctives: string[];  // Exercise names to include in warm-up
+}
+
+// Warm-up exercise (simpler than a full Exercise — no sets/reps tracking)
+export interface WarmUpExercise {
+  name: string;
+  duration: string;        // e.g., "30 seconds", "10 each side"
+  cue: string;             // One-line coaching cue
+  isCorrectiveFor?: MobilityTestId;  // If this targets a specific assessment area
 }

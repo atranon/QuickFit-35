@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Columns, List, Sparkles, Clock, Check, Info, StickyNote, TrendingUp, Target, History, Timer, Trophy, Activity, Zap, ShieldCheck, Cloud, ArrowRight, Gauge, Play, ExternalLink } from 'lucide-react';
-import { DaySchedule, Exercise, WorkoutLog, SetData, SwingSpeedData } from '../types';
+import { ArrowLeft, Columns, List, Sparkles, Clock, Check, Info, StickyNote, TrendingUp, Target, History, Timer, Trophy, Activity, Zap, ShieldCheck, Cloud, ArrowRight, Gauge, Play, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { DaySchedule, Exercise, WorkoutLog, SetData, SwingSpeedData, WarmUpExercise } from '../types';
 import { generateFormDescription, generateWorkoutRoutine } from '../services/geminiService';
 import GeminiModal from './GeminiModal';
 import VideoModal from './VideoModal';
 import { triggerBackgroundSync } from '../services/storageService';
 import { getExerciseDemo, getFallbackVideoUrl } from '../constants/exerciseDemos';
+import { buildWarmUp, getCoolDown } from '../constants/mobilityAssessment';
 
 interface WorkoutViewProps {
   dayKey: string;
@@ -46,6 +47,12 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
   const hasSpeedWork = schedule.exercises.some(e => e.type === 'speed');
   const [swingSpeed, setSwingSpeed] = useState<SwingSpeedData>({});
   const [showSpeedInput, setShowSpeedInput] = useState(hasSpeedWork);
+
+  // Warm-up and cool-down state
+  const [showWarmUp, setShowWarmUp] = useState(true);
+  const [showCoolDown, setShowCoolDown] = useState(false);
+  const [warmUpExercises] = useState<WarmUpExercise[]>(() => buildWarmUp(schedule.type));
+  const [coolDownExercises] = useState<WarmUpExercise[]>(() => getCoolDown());
 
   useEffect(() => {
     const savedNotes = localStorage.getItem(`workout_notes_${dayKey}`);
@@ -510,9 +517,50 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
       </div>
 
       <div className="grid gap-6">
-        <button onClick={openRoutineGen} className="bg-gradient-to-r from-indigo-600/40 to-blue-700/40 hover:from-indigo-600/60 hover:to-blue-700/60 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 border border-blue-500/20 shadow-lg active:scale-[0.98] transition">
-            <Sparkles size={14} className="text-blue-400" /> Dynamic Prep & Recovery
-        </button>
+        {/* Built-in Warm-Up Section */}
+        <div className="bg-slate-800/30 border border-emerald-500/20 rounded-2xl overflow-hidden">
+          <button
+            onClick={() => setShowWarmUp(!showWarmUp)}
+            className="w-full px-4 py-3 flex justify-between items-center hover:bg-slate-800/50 transition"
+          >
+            <div className="flex items-center gap-2">
+              <Activity size={14} className="text-emerald-400" />
+              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+                Warm-Up ({warmUpExercises.length} moves)
+              </span>
+              {warmUpExercises.some(e => e.isCorrectiveFor) && (
+                <span className="text-[7px] font-black bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded uppercase">
+                  + correctives
+                </span>
+              )}
+            </div>
+            {showWarmUp ? <ChevronUp size={14} className="text-slate-500" /> : <ChevronDown size={14} className="text-slate-500" />}
+          </button>
+
+          {showWarmUp && (
+            <div className="px-4 pb-4 space-y-2 animate-in fade-in duration-300">
+              {warmUpExercises.map((ex, i) => (
+                <div key={i} className={`flex items-start gap-3 py-2 ${i > 0 ? 'border-t border-slate-800' : ''}`}>
+                  <span className="text-[9px] font-black text-slate-600 w-4 text-right shrink-0 mt-0.5">{i + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-300">{ex.name}</span>
+                      {ex.isCorrectiveFor && (
+                        <span className="text-[7px] font-black bg-purple-500/20 text-purple-400 px-1 py-0.5 rounded uppercase">Fix</span>
+                      )}
+                    </div>
+                    <span className="text-[9px] text-slate-500">{ex.duration}</span>
+                    <p className="text-[9px] text-slate-600 italic mt-0.5">{ex.cue}</p>
+                  </div>
+                </div>
+              ))}
+              {/* Keep the AI button as a secondary option */}
+              <button onClick={openRoutineGen} className="w-full mt-2 py-2 text-[9px] font-black text-blue-400/50 hover:text-blue-400 uppercase tracking-widest flex items-center justify-center gap-1.5 transition">
+                <Sparkles size={10} /> Generate AI Warm-Up Instead
+              </button>
+            </div>
+          )}
+        </div>
 
         {groups.map((group, gIdx) => (
           <div key={gIdx} className={`bg-slate-800/20 border-l-2 border-slate-700 rounded-xl overflow-hidden shadow-xl ${schedule.color}`}>
@@ -698,6 +746,37 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
             </div>
           </div>
         )}
+
+        {/* Cool-Down Section */}
+        <div className="bg-slate-800/30 border border-blue-500/20 rounded-2xl overflow-hidden">
+          <button
+            onClick={() => setShowCoolDown(!showCoolDown)}
+            className="w-full px-4 py-3 flex justify-between items-center hover:bg-slate-800/50 transition"
+          >
+            <div className="flex items-center gap-2">
+              <Activity size={14} className="text-blue-400" />
+              <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">
+                Cool-Down ({coolDownExercises.length} stretches)
+              </span>
+            </div>
+            {showCoolDown ? <ChevronUp size={14} className="text-slate-500" /> : <ChevronDown size={14} className="text-slate-500" />}
+          </button>
+
+          {showCoolDown && (
+            <div className="px-4 pb-4 space-y-2 animate-in fade-in duration-300">
+              {coolDownExercises.map((ex, i) => (
+                <div key={i} className={`flex items-start gap-3 py-2 ${i > 0 ? 'border-t border-slate-800' : ''}`}>
+                  <span className="text-[9px] font-black text-slate-600 w-4 text-right shrink-0 mt-0.5">{i + 1}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-bold text-slate-300">{ex.name}</span>
+                    <span className="text-[9px] text-slate-500 ml-2">{ex.duration}</span>
+                    <p className="text-[9px] text-slate-600 italic mt-0.5">{ex.cue}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {prevNotes && (
              <div className="bg-blue-500/5 border border-blue-500/10 p-4 rounded-xl">
