@@ -2,6 +2,20 @@
 export type WorkoutPlanFrequency = '2x' | '3x' | '4x' | '5x';
 export type ProgramType = 'golf' | 'powerbuilding';
 
+// Phase system — 4-week mesocycle that repeats
+export type Phase = 'foundation' | 'build' | 'peak' | 'deload';
+
+// PhaseInfo is what the phase engine returns — everything the UI needs to display
+export interface PhaseInfo {
+  phase: Phase;           // Which phase we're in right now
+  weekNumber: number;     // Absolute week number since they started (1, 2, 3...)
+  cycleNumber: number;    // Which 4-week cycle they're on (1, 2, 3...)
+  weekInCycle: number;    // Week within the current cycle (1-4)
+  label: string;          // Human-readable label like "Build — Week 6"
+  description: string;    // Short coaching cue for this phase
+  color: string;          // Tailwind color class for UI badges
+}
+
 export interface Exercise {
   id: string;
   group: string;

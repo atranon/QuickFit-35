@@ -18,6 +18,7 @@ import FloatingFeedbackButton from './components/FloatingFeedbackButton';
 import { playBeep } from './utils/audioUtils';
 import { connectToHeartRateDevice } from './services/bleService';
 import { getRecommendedPlan } from './lib/recommendation';
+import { getCurrentPhase, applyPhaseToSchedule } from './lib/phaseEngine';
 import { getUserPreferences } from './services/storageService';
 
 const App: React.FC = () => {
@@ -41,6 +42,9 @@ const App: React.FC = () => {
   // Completion Celebration State
   const [completionLog, setCompletionLog] = useState<WorkoutLog | null>(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+
+  // Phase State
+  const [phaseInfo, setPhaseInfo] = useState(() => getCurrentPhase());
 
   // Heart Rate State
   const [bpm, setBpm] = useState<number | null>(null);
@@ -144,6 +148,7 @@ const App: React.FC = () => {
   const closeCompletionModal = () => {
     setShowCompletionModal(false);
     setCompletionLog(null);
+    setPhaseInfo(getCurrentPhase()); // Recalculate phase on return to dashboard
     setView('dashboard');
     setActiveDayKey(null);
   };
@@ -349,6 +354,28 @@ const App: React.FC = () => {
           );
         })()}
 
+        {/* Phase Indicator Card */}
+        <div className={`mb-6 p-4 rounded-2xl border shadow-lg ${
+          phaseInfo.phase === 'foundation' ? 'bg-blue-500/10 border-blue-500/30' :
+          phaseInfo.phase === 'build' ? 'bg-purple-500/10 border-purple-500/30' :
+          phaseInfo.phase === 'peak' ? 'bg-amber-500/10 border-amber-500/30' :
+          'bg-emerald-500/10 border-emerald-500/30'
+        }`}>
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center gap-2">
+              <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest ${phaseInfo.color}`}>
+                {phaseInfo.phase}
+              </span>
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                Week {phaseInfo.weekNumber} • Cycle {phaseInfo.cycleNumber}
+              </span>
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+            {phaseInfo.description}
+          </p>
+        </div>
+
         <div className="flex justify-between items-end mb-6 px-1">
           <div>
             <h2 className="text-2xl font-black text-white mb-1 uppercase tracking-tight italic">Schedule</h2>
@@ -501,9 +528,9 @@ const App: React.FC = () => {
         )}
         {view === 'workout' && activeDayKey && (
           <div className="pt-20 px-4 max-w-md mx-auto">
-             <WorkoutView 
-               dayKey={activeDayKey} 
-               schedule={PLANS[selectedProgram][selectedPlan].schedule[activeDayKey]} 
+             <WorkoutView
+               dayKey={activeDayKey}
+               schedule={applyPhaseToSchedule(PLANS[selectedProgram][selectedPlan].schedule[activeDayKey], phaseInfo.phase)}
                onBack={() => setView('dashboard')}
                onStartTimer={startTimer}
                onFinish={handleWorkoutFinish}
