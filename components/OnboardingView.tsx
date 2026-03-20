@@ -127,14 +127,21 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
   const [phase, setPhase] = useState<'hero' | 'steps' | 'summary'>('hero');
   const [currentStep, setCurrentStep] = useState(0);
   const [prefs, setPrefs] = useState<Record<string, string>>({});
+  const [selectedValue, setSelectedValue] = useState<string | null>(null);
 
   const handleSelect = (value: string) => {
-    const stepId = ONBOARDING_STEPS[currentStep].id;
-    setPrefs(prev => ({ ...prev, [stepId]: value }));
+    setSelectedValue(value);
+  };
 
-    // Auto-advance after brief delay
+  const handleNext = () => {
+    if (!selectedValue) return;
+
+    const stepId = ONBOARDING_STEPS[currentStep].id;
+    setPrefs(prev => ({ ...prev, [stepId]: selectedValue }));
+    setSelectedValue(null); // Reset for next step
+
     if (currentStep < ONBOARDING_STEPS.length - 1) {
-      setTimeout(() => setCurrentStep(prev => prev + 1), 200);
+      setCurrentStep(prev => prev + 1);
     }
   };
 
@@ -157,6 +164,7 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
   const goBack = () => {
     if (currentStep > 0) {
       setCurrentStep(prev => prev - 1);
+      setSelectedValue(null);
     } else {
       setPhase('hero');
     }
@@ -324,46 +332,53 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
             </p>
           </div>
 
-          <div className="grid gap-3 mb-12">
+          <div className="grid gap-3 mb-6">
             {step.options.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => handleSelect(opt.value)}
                 className={`group relative text-left p-5 rounded-2xl border-2 transition-all duration-300 active:scale-[0.98] ${
-                  prefs[step.id] === opt.value
+                  selectedValue === opt.value
                     ? 'bg-emerald-600 border-emerald-400 shadow-2xl shadow-emerald-500/20 translate-x-1'
                     : 'bg-slate-800/40 border-slate-700 hover:border-slate-500 hover:bg-slate-800'
                 }`}
               >
                 <div className="flex justify-between items-center">
                   <div>
-                    <span className={`block font-black uppercase italic tracking-tight text-lg ${prefs[step.id] === opt.value ? 'text-white' : 'text-slate-300'}`}>
+                    <span className={`block font-black uppercase italic tracking-tight text-lg ${selectedValue === opt.value ? 'text-white' : 'text-slate-300'}`}>
                       {opt.label}
                     </span>
                     {opt.desc && (
-                      <span className={`text-xs font-medium block mt-1 ${prefs[step.id] === opt.value ? 'text-emerald-100' : 'text-slate-500'}`}>
+                      <span className={`text-xs font-medium block mt-1 ${selectedValue === opt.value ? 'text-emerald-100' : 'text-slate-500'}`}>
                         {opt.desc}
                       </span>
                     )}
                   </div>
-                  {prefs[step.id] === opt.value && <ChevronRight className="text-white" size={24} />}
+                  {selectedValue === opt.value && <ChevronRight className="text-white" size={24} />}
                 </div>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Show "See My Program" on last step */}
-        {isLastStep && prefs[step.id] && (
-          <div className="pb-8 animate-in fade-in zoom-in duration-300">
-            <button
-              onClick={() => setPhase('summary')}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-emerald-500/30 flex items-center justify-center gap-3 transition active:scale-[0.98] uppercase tracking-widest italic"
-            >
-              See My Program <ChevronRight size={20} />
-            </button>
-          </div>
-        )}
+        {/* Show "Next" button on non-last steps, or "See My Program" on last step */}
+        <div className="pb-8">
+          {selectedValue && (
+            <div className="animate-in fade-in zoom-in duration-300">
+              <button
+                onClick={isLastStep ? () => {
+                  // Save the last selection before going to summary
+                  const stepId = ONBOARDING_STEPS[currentStep].id;
+                  setPrefs(prev => ({ ...prev, [stepId]: selectedValue }));
+                  setPhase('summary');
+                } : handleNext}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-emerald-500/30 flex items-center justify-center gap-3 transition active:scale-[0.98] uppercase tracking-widest italic"
+              >
+                {isLastStep ? 'See My Program' : 'Next'} <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

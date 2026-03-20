@@ -21,22 +21,30 @@ const MobilityAssessmentView: React.FC<MobilityAssessmentViewProps> = ({ onBack,
   const [currentTest, setCurrentTest] = useState(0);
   const [results, setResults] = useState<MobilityResult[]>([]);
   const [completedAssessment, setCompletedAssessment] = useState<MobilityAssessmentData | null>(null);
+  const [selectedScore, setSelectedScore] = useState<MobilityScore | null>(null);
 
   const existing = getAssessment();
 
   const handleScore = (score: MobilityScore) => {
+    setSelectedScore(score);
+  };
+
+  const handleNext = () => {
+    if (!selectedScore) return;
+
     const test = MOBILITY_TESTS[currentTest];
     const result: MobilityResult = {
       testId: test.id,
-      score,
+      score: selectedScore,
       side: test.isBilateral ? 'both' : undefined,
     };
 
     const newResults = [...results, result];
     setResults(newResults);
+    setSelectedScore(null); // Reset for next test
 
     if (currentTest < MOBILITY_TESTS.length - 1) {
-      setTimeout(() => setCurrentTest(prev => prev + 1), 200);
+      setCurrentTest(prev => prev + 1);
     } else {
       // Assessment complete — save and show summary
       const data = saveAssessment(newResults);
@@ -49,6 +57,7 @@ const MobilityAssessmentView: React.FC<MobilityAssessmentViewProps> = ({ onBack,
     if (currentTest > 0) {
       setResults(prev => prev.slice(0, -1));
       setCurrentTest(prev => prev - 1);
+      setSelectedScore(null);
     } else {
       setPhase('intro');
     }
@@ -233,26 +242,26 @@ const MobilityAssessmentView: React.FC<MobilityAssessmentViewProps> = ({ onBack,
 
       <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 text-center">How did you do?</p>
 
-      <div className="grid gap-3">
+      <div className="grid gap-3 mb-4">
         {SCORE_OPTIONS.map(opt => (
           <button
             key={opt.value}
             onClick={() => handleScore(opt.value)}
             className={`text-left p-4 rounded-2xl border-2 transition-all duration-300 active:scale-[0.98] ${
-              results[currentTest]?.score === opt.value
+              selectedScore === opt.value
                 ? opt.color
                 : 'bg-slate-800/40 border-slate-700 hover:border-slate-500'
             }`}
           >
             <div className="flex items-center gap-3">
-              <span className={results[currentTest]?.score === opt.value ? 'text-white' : 'text-slate-500'}>
+              <span className={selectedScore === opt.value ? 'text-white' : 'text-slate-500'}>
                 {opt.icon}
               </span>
               <div>
-                <span className={`block font-black uppercase italic tracking-tight text-lg ${results[currentTest]?.score === opt.value ? 'text-white' : 'text-slate-300'}`}>
+                <span className={`block font-black uppercase italic tracking-tight text-lg ${selectedScore === opt.value ? 'text-white' : 'text-slate-300'}`}>
                   {opt.label}
                 </span>
-                <span className={`text-xs font-medium block mt-0.5 ${results[currentTest]?.score === opt.value ? 'text-white/80' : 'text-slate-500'}`}>
+                <span className={`text-xs font-medium block mt-0.5 ${selectedScore === opt.value ? 'text-white/80' : 'text-slate-500'}`}>
                   {opt.desc}
                 </span>
               </div>
@@ -260,6 +269,19 @@ const MobilityAssessmentView: React.FC<MobilityAssessmentViewProps> = ({ onBack,
           </button>
         ))}
       </div>
+
+      {/* Next/Confirm Button */}
+      <button
+        onClick={handleNext}
+        disabled={!selectedScore}
+        className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition mb-4 ${
+          selectedScore
+            ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-xl shadow-purple-500/20 active:scale-[0.98]'
+            : 'bg-slate-800/30 text-slate-600 cursor-not-allowed border border-slate-700'
+        }`}
+      >
+        {currentTest < MOBILITY_TESTS.length - 1 ? 'Next Test' : 'See Results'} <ChevronRight size={18} />
+      </button>
 
       {/* Per-score descriptions */}
       <div className="mt-4 bg-slate-800/30 rounded-xl p-3 text-[10px] text-slate-600 space-y-1">
