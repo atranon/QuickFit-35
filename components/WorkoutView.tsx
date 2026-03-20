@@ -561,56 +561,6 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
         exerciseName={videoModalExercise}
       />
 
-      {/* First Time Tutorial Overlay */}
-      {showTutorial && (
-        <div className="fixed inset-0 z-[120] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-500">
-          <div className="max-w-sm w-full bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-blue-500/30 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-blue-500/10 blur-[80px] -z-10 rounded-full"></div>
-            
-            <div className="text-center mb-8">
-                <div className="inline-flex p-4 bg-blue-500/20 rounded-2xl mb-4">
-                    <Sparkles className="text-blue-400" size={40} />
-                </div>
-                <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter leading-none mb-2">
-                    Neural <span className="text-blue-400">Onboarding</span>
-                </h2>
-                <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">First Session Protocol Initialized</p>
-            </div>
-
-            <div className="space-y-6 mb-8">
-                <div className="flex gap-4">
-                    <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 text-blue-400 font-black italic">1</div>
-                    <div>
-                        <h4 className="text-xs font-black text-white uppercase tracking-tight mb-1">Establish Your Floor</h4>
-                        <p className="text-[10px] text-slate-500 leading-relaxed font-medium">Pick a weight you can move with <span className="text-blue-300">perfect technical integrity</span> for the target reps. Don't chase max load today.</p>
-                    </div>
-                </div>
-                <div className="flex gap-4">
-                    <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 text-blue-400 font-black italic">2</div>
-                    <div>
-                        <h4 className="text-xs font-black text-white uppercase tracking-tight mb-1">Technical Intel</h4>
-                        <p className="text-[10px] text-slate-500 leading-relaxed font-medium">Tap the <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-slate-700 text-slate-300"><Info size={8} /></span> icon on any exercise to get AI-powered technical cues and form guidance.</p>
-                    </div>
-                </div>
-                <div className="flex gap-4">
-                    <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0 text-blue-400 font-black italic">3</div>
-                    <div>
-                        <h4 className="text-xs font-black text-white uppercase tracking-tight mb-1">Log RPE</h4>
-                        <p className="text-[10px] text-slate-500 leading-relaxed font-medium">Rate your effort from 1-10. Aim for <span className="text-blue-300">RPE 7-8</span> today. This sets the baseline for your future PRs.</p>
-                    </div>
-                </div>
-            </div>
-
-            <button 
-                onClick={dismissTutorial}
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 transition active:scale-95 uppercase tracking-widest text-[10px] italic"
-            >
-                Start Training <ArrowRight size={16} />
-            </button>
-          </div>
-        </div>
-      )}
-
       <div className="flex justify-between items-center mb-6">
         <div className="flex gap-2">
           <button onClick={onBack} className="bg-slate-800 p-2 rounded-lg text-white hover:bg-slate-700 transition">
