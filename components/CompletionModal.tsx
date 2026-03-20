@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { Trophy, CheckCircle2, Star, Quote, ArrowRight, Gauge, Zap } from 'lucide-react';
+import { Trophy, CheckCircle2, Star, Quote, ArrowRight, Gauge, Zap, Share2, Loader2 } from 'lucide-react';
 import { WorkoutLog } from '../types';
+import { shareOrDownloadCard, ShareCardData } from '../lib/shareCard';
 
 interface CompletionModalProps {
   isOpen: boolean;
@@ -11,6 +12,52 @@ interface CompletionModalProps {
 
 const CompletionModal: React.FC<CompletionModalProps> = ({ isOpen, onClose, log }) => {
   if (!isOpen || !log) return null;
+
+  const [isSharing, setIsSharing] = React.useState(false);
+  const [shareResult, setShareResult] = React.useState<string | null>(null);
+
+  const handleShare = async () => {
+    setIsSharing(true);
+    setShareResult(null);
+    try {
+      // Build share data from the current session + history
+      const historyStr = localStorage.getItem('workout_history') || '[]';
+      const history = JSON.parse(historyStr);
+      history.sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      const data: ShareCardData = {
+        totalSessions: history.length,
+      };
+
+      // Add speed data if this session had it
+      const speedSessions = history.filter((h: any) => h.swingSpeed?.driverSpeed);
+      if (speedSessions.length >= 2) {
+        data.firstSpeed = speedSessions[0].swingSpeed.driverSpeed;
+        data.latestSpeed = speedSessions[speedSessions.length - 1].swingSpeed.driverSpeed;
+        data.speedGain = data.latestSpeed! - data.firstSpeed!;
+        data.estimatedYards = Math.round(data.speedGain! * 2.5);
+      } else if (log.swingSpeed?.driverSpeed) {
+        data.latestSpeed = log.swingSpeed.driverSpeed;
+        data.firstSpeed = data.latestSpeed;
+        data.speedGain = 0;
+      }
+
+      // Date range
+      if (history.length > 0) {
+        const first = new Date(history[0].date);
+        const last = new Date(history[history.length - 1].date);
+        data.dateRange = `${first.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} – ${last.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+      }
+
+      const result = await shareOrDownloadCard(data);
+      setShareResult(result === 'shared' ? 'Shared!' : result === 'downloaded' ? 'Saved!' : 'Error');
+    } catch (e) {
+      setShareResult('Error');
+    } finally {
+      setIsSharing(false);
+      setTimeout(() => setShareResult(null), 3000);
+    }
+  };
 
   const exerciseCount = log.exercises.length;
   const totalSets = log.exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
@@ -102,12 +149,26 @@ const CompletionModal: React.FC<CompletionModalProps> = ({ isOpen, onClose, log 
            </p>
         </div>
 
-        <button
-          onClick={onClose}
-          className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 transition active:scale-95 uppercase tracking-widest text-xs italic"
-        >
-          Return to Dashboard <ArrowRight size={18} />
-        </button>
+        <div className="space-y-3">
+          <button
+            onClick={handleShare}
+            disabled={isSharing}
+            className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 transition active:scale-95 uppercase tracking-widest text-xs italic"
+          >
+            {isSharing ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Share2 size={16} />
+            )}
+            {shareResult || 'Share Your Progress'}
+          </button>
+          <button
+            onClick={onClose}
+            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 transition active:scale-95 uppercase tracking-widest text-xs italic"
+          >
+            Return to Dashboard <ArrowRight size={18} />
+          </button>
+        </div>
       </div>
     </div>
   );

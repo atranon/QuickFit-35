@@ -1,8 +1,9 @@
 
 import React, { useMemo, useState } from 'react';
-import { ArrowLeft, TrendingUp, Calendar, Zap, Trophy, BarChart3, ChevronDown, ChevronUp, Info, Gauge } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Calendar, Zap, Trophy, BarChart3, ChevronDown, ChevronUp, Info, Gauge, Share2, Loader2 } from 'lucide-react';
 import { WorkoutLog, SwingSpeedData } from '../types';
 import { getCurrentPhase } from '../lib/phaseEngine';
+import { shareOrDownloadCard, buildShareDataFromHistory } from '../lib/shareCard';
 
 interface ProgressViewProps {
   onBack: () => void;
@@ -10,6 +11,8 @@ interface ProgressViewProps {
 
 const ProgressView: React.FC<ProgressViewProps> = ({ onBack }) => {
   const [showMoreExercises, setShowMoreExercises] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareResult, setShareResult] = useState<string | null>(null);
 
   const history: WorkoutLog[] = useMemo(() => {
     const saved = localStorage.getItem('workout_history');
@@ -140,13 +143,48 @@ const ProgressView: React.FC<ProgressViewProps> = ({ onBack }) => {
   const exercises = Object.entries(stats.exerciseStats) as [string, { start: number; end: number; displayUnit: string; isStack: boolean }][];
   const displayedExercises = showMoreExercises ? exercises : exercises.slice(0, 5);
 
+  const handleShare = async () => {
+    setIsSharing(true);
+    setShareResult(null);
+    try {
+      const data = buildShareDataFromHistory();
+      const result = await shareOrDownloadCard(data);
+      if (result === 'shared') {
+        setShareResult('Shared!');
+      } else if (result === 'downloaded') {
+        setShareResult('Image saved!');
+      } else {
+        setShareResult('Share failed. Try again.');
+      }
+    } catch (e) {
+      setShareResult('Something went wrong.');
+    } finally {
+      setIsSharing(false);
+      setTimeout(() => setShareResult(null), 3000);
+    }
+  };
+
   return (
     <div className="pb-32 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center gap-4 mb-8">
-        <button onClick={onBack} className="bg-slate-800 p-2 rounded-lg text-white hover:bg-slate-700 transition">
-          <ArrowLeft size={20} />
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <button onClick={onBack} className="bg-slate-800 p-2 rounded-lg text-white hover:bg-slate-700 transition">
+            <ArrowLeft size={20} />
+          </button>
+          <h2 className="text-2xl font-black text-white uppercase italic tracking-tight">Performance Intel</h2>
+        </div>
+        <button
+          onClick={handleShare}
+          disabled={isSharing}
+          className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold px-3 py-2 rounded-xl text-[10px] uppercase tracking-widest flex items-center gap-1.5 transition active:scale-95 shadow-lg shadow-emerald-500/20"
+        >
+          {isSharing ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <Share2 size={14} />
+          )}
+          {shareResult || 'Share'}
         </button>
-        <h2 className="text-2xl font-black text-white uppercase italic tracking-tight">Performance Intel</h2>
       </div>
 
       {/* Summary Cards */}
