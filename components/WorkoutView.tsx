@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Columns, List, Sparkles, Clock, Check, Info, StickyNote, TrendingUp, Target, History, Timer, Trophy, Activity, Zap, ShieldCheck, Cloud, ArrowRight, Gauge, Play, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Columns, List, Sparkles, Clock, Check, Info, StickyNote, TrendingUp, Target, History, Timer, Trophy, Activity, Zap, ShieldCheck, Cloud, ArrowRight, Gauge, Play, ExternalLink, ChevronDown, ChevronUp, RefreshCw, X } from 'lucide-react';
 import { DaySchedule, Exercise, WorkoutLog, SetData, SwingSpeedData, WarmUpExercise } from '../types';
 import { generateFormDescription, generateWorkoutRoutine } from '../services/geminiService';
 import GeminiModal from './GeminiModal';
@@ -8,6 +8,7 @@ import VideoModal from './VideoModal';
 import ExerciseDemoModal from './ExerciseDemoModal';
 import { triggerBackgroundSync } from '../services/storageService';
 import { getExerciseDemo, getFallbackVideoUrl } from '../constants/exerciseDemos';
+import { getExerciseAlternatives } from '../constants/exerciseAlternatives';
 import { buildWarmUp, getCoolDown } from '../constants/mobilityAssessment';
 
 interface WorkoutViewProps {
@@ -47,6 +48,11 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
   const [demoExerciseName, setDemoExerciseName] = useState('');
   const [demoData, setDemoData] = useState<any>(null);
   const [demoFallbackUrl, setDemoFallbackUrl] = useState('');
+
+  // Exercise Swap Modal state
+  const [swapModalOpen, setSwapModalOpen] = useState(false);
+  const [swapExerciseId, setSwapExerciseId] = useState('');
+  const [swapExerciseName, setSwapExerciseName] = useState('');
 
   const [showTutorial, setShowTutorial] = useState(false);
 
@@ -437,6 +443,60 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
         fallbackSearchUrl={demoFallbackUrl}
       />
 
+      {/* Exercise Swap Modal */}
+      {swapModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-md z-[110] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="max-w-md w-full bg-slate-800 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden">
+            {/* Header */}
+            <div className="px-4 py-3 bg-slate-900/50 border-b border-slate-700 flex justify-between items-center">
+              <div>
+                <h3 className="text-sm font-black text-white uppercase italic">Swap Exercise</h3>
+                <p className="text-[9px] text-slate-500 mt-0.5">{swapExerciseName}</p>
+              </div>
+              <button onClick={() => setSwapModalOpen(false)} className="p-1 text-slate-400 hover:text-white transition">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Alternatives List */}
+            <div className="p-4 space-y-2 max-h-[60vh] overflow-y-auto">
+              {getExerciseAlternatives(swapExerciseName).map((alt, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    handleNameChange(swapExerciseId, alt.name);
+                    setSwapModalOpen(false);
+                  }}
+                  className="w-full text-left p-3 bg-slate-900/50 hover:bg-slate-900 border border-slate-700 hover:border-purple-500/50 rounded-xl transition group"
+                >
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <span className="text-sm font-black text-white group-hover:text-purple-400 transition">{alt.name}</span>
+                    <span className={`text-[7px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter shrink-0 ${
+                      alt.difficulty === 'easier' ? 'bg-blue-500/20 text-blue-400' :
+                      alt.difficulty === 'harder' ? 'bg-red-500/20 text-red-400' :
+                      'bg-slate-700 text-slate-400'
+                    }`}>
+                      {alt.difficulty}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 leading-relaxed">{alt.reason}</p>
+                </button>
+              ))}
+            </div>
+
+            {/* Keep Original Button */}
+            <div className="px-4 pb-4">
+              <button
+                onClick={() => setSwapModalOpen(false)}
+                className="w-full py-2.5 text-[10px] font-black text-slate-500 hover:text-slate-400 uppercase tracking-widest transition"
+              >
+                Keep Original
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <GeminiModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -629,6 +689,20 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
                             >
                               <Play size={12} fill="currentColor" />
                             </button>
+                            {/* Swap button — show alternatives if they exist */}
+                            {getExerciseAlternatives(currentName).length > 0 && (
+                              <button
+                                onClick={() => {
+                                  setSwapExerciseId(ex.id);
+                                  setSwapExerciseName(currentName);
+                                  setSwapModalOpen(true);
+                                }}
+                                className="text-purple-500/60 hover:text-purple-400 transition p-0.5"
+                                title="Swap Exercise"
+                              >
+                                <RefreshCw size={12} />
+                              </button>
+                            )}
                             <button onClick={() => onStartTimer(ex.rest)} title="Rest" className="text-slate-600 hover:text-amber-500 transition p-0.5"><Timer size={12} /></button>
                             <button onClick={() => openFormCheck(ex.id, ex.name, ex.defaultCategory)} className="text-slate-600 hover:text-blue-400 transition p-0.5"><Info size={12} /></button>
                           </div>
