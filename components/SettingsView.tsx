@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Cloud, BookOpen, Mail, Info, Trash2, AlertCircle, User, RefreshCw, Bug } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Cloud, BookOpen, Mail, Info, Trash2, AlertCircle, User, RefreshCw, Bug, LogOut } from 'lucide-react';
 import SyncModal from './SyncModal';
 import * as Sentry from '@sentry/react';
+import { getCurrentUser, signOut as supabaseSignOut } from '../services/supabaseSync';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface SettingsViewProps {
   onBack: () => void;
@@ -12,6 +14,16 @@ interface SettingsViewProps {
 
 const SettingsView: React.FC<SettingsViewProps> = ({ onBack, onReset, onShowTutorial, onShowPreferences }) => {
   const [isSyncOpen, setIsSyncOpen] = useState(false);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+
+  useEffect(() => {
+    getCurrentUser().then(u => setUser(u));
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabaseSignOut();
+    setUser(null);
+  };
 
   const confirmReset = () => {
     if (window.confirm("Are you sure you want to clear ALL history and custom data? This cannot be undone.")) {
@@ -91,6 +103,38 @@ const SettingsView: React.FC<SettingsViewProps> = ({ onBack, onReset, onShowTuto
                 <User size={18} />
                 Manage Preferences
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Account Section */}
+        {user && (
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-slate-700 bg-slate-800/30">
+              <h3 className="font-bold text-white flex items-center gap-2">
+                <User size={18} className="text-emerald-400" />
+                Account
+              </h3>
+            </div>
+            <div className="p-4">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-sm text-slate-400">Email</span>
+                <span className="text-sm text-white font-medium truncate max-w-[200px]">{user.email}</span>
+              </div>
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-sm text-slate-400">Status</span>
+                <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-full">Cloud Sync Active</span>
+              </div>
+              <button
+                onClick={handleSignOut}
+                className="w-full bg-slate-700/50 hover:bg-red-500/20 text-slate-400 hover:text-red-400 font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition border border-slate-700 hover:border-red-500/30"
+              >
+                <LogOut size={16} />
+                Sign Out
+              </button>
+              <p className="text-[10px] text-slate-600 mt-2 text-center">
+                Signing out won't delete your local data.
+              </p>
             </div>
           </div>
         )}

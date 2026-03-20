@@ -20,6 +20,8 @@ import { connectToHeartRateDevice } from './services/bleService';
 import { getRecommendedPlan } from './lib/recommendation';
 import { getCurrentPhase, applyPhaseToSchedule } from './lib/phaseEngine';
 import { getTopInsight, INSIGHT_STYLES } from './lib/insightsEngine';
+import { onAuthChange, pushBackup, getCurrentUser } from './services/supabaseSync';
+import type { User } from '@supabase/supabase-js';
 import { getUserPreferences } from './services/storageService';
 
 const App: React.FC = () => {
@@ -50,7 +52,11 @@ const App: React.FC = () => {
   // Heart Rate State
   const [bpm, setBpm] = useState<number | null>(null);
   const [hrDevice, setHrDevice] = useState<any>(null);
-  
+
+  // Auth and Sync State
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle');
+
   const intervalRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -109,6 +115,15 @@ const App: React.FC = () => {
     };
   }, [timerActive, timerSeconds]);
 
+  // Track auth state changes from Supabase
+  useEffect(() => {
+    getCurrentUser().then(u => setAuthUser(u));
+    const unsubscribe = onAuthChange((user) => {
+      setAuthUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const startTimer = (sec: number) => {
     setTimerSeconds(sec);
     setTimerActive(true);
@@ -144,6 +159,20 @@ const App: React.FC = () => {
 
     setCompletionLog(log);
     setShowCompletionModal(true);
+
+    // Auto-sync to Supabase if signed in (silent, non-blocking)
+    if (authUser) {
+      setSyncStatus('syncing');
+      pushBackup()
+        .then(result => {
+          setSyncStatus(result.success ? 'done' : 'error');
+          setTimeout(() => setSyncStatus('idle'), 3000);
+        })
+        .catch(() => {
+          setSyncStatus('error');
+          setTimeout(() => setSyncStatus('idle'), 3000);
+        });
+    }
   };
 
   const closeCompletionModal = () => {
@@ -505,6 +534,20 @@ const App: React.FC = () => {
            <Dumbbell className="text-emerald-500" />
            <h1 className="font-black text-xl tracking-tighter uppercase italic">QuickFit <span className="text-emerald-500">35</span></h1>
         </div>
+        {/* Sync status indicator */}
+        {authUser && (
+          <div className={`w-2 h-2 rounded-full transition-all ${
+            syncStatus === 'syncing' ? 'bg-blue-400 animate-pulse' :
+            syncStatus === 'done' ? 'bg-emerald-400' :
+            syncStatus === 'error' ? 'bg-red-400' :
+            'bg-emerald-400/50'
+          }`} title={
+            syncStatus === 'syncing' ? 'Syncing...' :
+            syncStatus === 'done' ? 'Synced' :
+            syncStatus === 'error' ? 'Sync failed' :
+            'Cloud connected'
+          } />
+        )}
         <div className="flex items-center gap-3">
           <button onClick={() => setView('progress')} className={`text-[10px] transition font-black uppercase tracking-widest flex items-center gap-1.5 px-3 py-2 rounded-lg border ${view === 'progress' ? 'bg-emerald-600 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' : 'bg-slate-800/50 text-slate-300 border-slate-700 hover:text-emerald-400'}`}>
             <BarChart3 size={14} /> <span className="hidden sm:inline">Progress</span>
