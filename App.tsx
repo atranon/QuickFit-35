@@ -517,7 +517,6 @@ const App: React.FC = () => {
       </nav>
 
       <main className="pt-4">
-        {view === 'onboarding' && <OnboardingView onComplete={(_prefs) => setView('plan-selection')} />}
         {view === 'onboarding' && <OnboardingView onComplete={handleOnboardingComplete} />}
         {view === 'dashboard' && renderDashboard()}
         {view === 'plan-selection' && renderPlanSelection()}
