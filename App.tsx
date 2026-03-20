@@ -19,6 +19,7 @@ import { playBeep } from './utils/audioUtils';
 import { connectToHeartRateDevice } from './services/bleService';
 import { getRecommendedPlan } from './lib/recommendation';
 import { getCurrentPhase, applyPhaseToSchedule } from './lib/phaseEngine';
+import { applyEquipmentToSchedule, getUserEquipment } from './lib/equipmentEngine';
 import { getTopInsight, INSIGHT_STYLES } from './lib/insightsEngine';
 import { onAuthChange, pushBackup, getCurrentUser } from './services/supabaseSync';
 import type { User } from '@supabase/supabase-js';
@@ -51,6 +52,9 @@ const App: React.FC = () => {
   // Phase State
   const [phaseInfo, setPhaseInfo] = useState(() => getCurrentPhase());
 
+  // Equipment State
+  const [selectedEquipment, setSelectedEquipment] = useState<string>(() => getUserEquipment());
+
   // Heart Rate State
   const [bpm, setBpm] = useState<number | null>(null);
   const [hrDevice, setHrDevice] = useState<any>(null);
@@ -66,7 +70,7 @@ const App: React.FC = () => {
     if (prefs) {
       const rec = getRecommendedPlan(prefs);
       setRecommendation(rec);
-      
+
       // If no plan was ever selected, use the recommendation as default
       if (!localStorage.getItem('selected_plan')) {
         setSelectedPlan(rec.frequency);
@@ -74,6 +78,9 @@ const App: React.FC = () => {
       if (!localStorage.getItem('selected_program')) {
         setSelectedProgram(rec.program);
       }
+
+      // Update equipment selection from preferences
+      setSelectedEquipment(prefs?.equipmentAccess || getUserEquipment());
     }
   }, []);
 
@@ -648,7 +655,7 @@ const App: React.FC = () => {
           <div className="pt-20 px-4 max-w-md mx-auto">
              <WorkoutView
                dayKey={activeDayKey}
-               schedule={applyPhaseToSchedule(PLANS[selectedProgram][selectedPlan].schedule[activeDayKey], phaseInfo.phase)}
+               schedule={applyEquipmentToSchedule(applyPhaseToSchedule(PLANS[selectedProgram][selectedPlan].schedule[activeDayKey], phaseInfo.phase), selectedEquipment as any)}
                onBack={() => setView('dashboard')}
                onStartTimer={startTimer}
                onFinish={handleWorkoutFinish}

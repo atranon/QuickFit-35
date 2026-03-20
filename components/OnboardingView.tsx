@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Zap, Target, Scale, Trophy, ChevronRight, ArrowLeft, Gauge, Calendar, Dumbbell, User } from 'lucide-react';
-import { UserPreferences, DrivingDistance, HandicapRange, SeasonStatus } from '../types';
+import { UserPreferences, DrivingDistance, HandicapRange, SeasonStatus, EquipmentAccess } from '../types';
 import { saveUserPreferences } from '../services/storageService';
 
 interface OnboardingViewProps {
@@ -91,6 +91,18 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     ]
   },
   {
+    id: 'equipmentAccess',
+    title: "Your Equipment",
+    subtitle: "What do you have access to for training?",
+    icon: <Dumbbell className="text-orange-400" size={32} />,
+    options: [
+      { label: "Full Gym", value: "full-gym", desc: "Barbells, cables, machines, racks." },
+      { label: "Home — Dumbbells", value: "home-dumbbells", desc: "Dumbbells, maybe a bench, resistance bands." },
+      { label: "Bands & Bodyweight", value: "bands-only", desc: "Just resistance bands and your body." },
+      { label: "Bodyweight Only", value: "no-equipment", desc: "No equipment at all." }
+    ]
+  },
+  {
     id: 'weightUnit',
     title: "Weight Unit",
     subtitle: "Quick preference — you can change this later.",
@@ -154,6 +166,7 @@ const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
       drivingDistance: (prefs.drivingDistance as DrivingDistance) || 'under200',
       handicapRange: (prefs.handicapRange as HandicapRange) || 'beginner',
       seasonStatus: (prefs.seasonStatus as SeasonStatus) || 'offseason',
+      equipmentAccess: (prefs.equipmentAccess as EquipmentAccess) || 'full-gym',
       completedAt: Date.now()
     };
     saveUserPreferences(finalPreferences);
