@@ -16,6 +16,14 @@ export interface PhaseInfo {
   color: string;          // Tailwind color class for UI badges
 }
 
+// Demo data for each exercise — video link, form cue, and metadata
+export interface ExerciseDemo {
+  videoSearchUrl: string;    // YouTube search URL pre-loaded with the exercise name
+  formCue: string;           // One-line coaching cue shown inline (always visible, no tap)
+  muscles: string;           // Target muscles in plain English
+  isGolfSpecific?: boolean;  // Flag for golf-performance exercises
+}
+
 export interface Exercise {
   id: string;
   group: string;

@@ -1,17 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Volume2, Loader2, StopCircle } from 'lucide-react';
+import { X, Volume2, Loader2, StopCircle, Play, ExternalLink } from 'lucide-react';
 import { generateSpeech } from '../services/geminiService';
 
 interface GeminiModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  content: React.ReactNode; // Can be string (markdown) or generic text
-  textContent?: string; // Raw text for TTS
+  content: React.ReactNode;
+  textContent?: string;
   loading: boolean;
+  videoUrl?: string;          // NEW: YouTube search URL for this exercise
+  isGolfSpecific?: boolean;   // NEW: flag for golf-specific badge
 }
 
-const GeminiModal: React.FC<GeminiModalProps> = ({ isOpen, onClose, title, content, textContent, loading }) => {
+const GeminiModal: React.FC<GeminiModalProps> = ({ isOpen, onClose, title, content, textContent, loading, videoUrl, isGolfSpecific }) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -45,18 +47,18 @@ const GeminiModal: React.FC<GeminiModalProps> = ({ isOpen, onClose, title, conte
     setIsGeneratingAudio(true);
     try {
       const audioBuffer = await generateSpeech(textContent);
-      
+
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (!audioCtxRef.current) {
         audioCtxRef.current = new AudioContextClass();
       }
-      
+
       const ctx = audioCtxRef.current;
       const source = ctx.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(ctx.destination);
       source.onended = () => setIsSpeaking(false);
-      
+
       sourceRef.current = source;
       source.start();
       setIsSpeaking(true);
@@ -73,13 +75,35 @@ const GeminiModal: React.FC<GeminiModalProps> = ({ isOpen, onClose, title, conte
   return (
     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
       <div className="bg-slate-800 border border-slate-600 p-6 rounded-xl shadow-2xl max-w-md w-full relative">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-blue-400">{title}</h3>
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h3 className="text-xl font-bold text-blue-400">{title}</h3>
+            {isGolfSpecific && (
+              <span className="inline-flex items-center gap-1 text-[8px] font-black bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded mt-1 uppercase tracking-widest">
+                Golf-Specific Movement
+              </span>
+            )}
+          </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition">
             <X size={20} />
           </button>
         </div>
-        
+
+        {/* Video Demo Button — PRIMARY action, shown first */}
+        {videoUrl && (
+          <a
+            href={videoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full mb-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition shadow-lg shadow-red-500/20 active:scale-[0.98]"
+          >
+            <Play size={18} fill="currentColor" />
+            Watch Demo on YouTube
+            <ExternalLink size={14} className="opacity-60" />
+          </a>
+        )}
+
+        {/* AI-Generated Form Tips */}
         <div className="text-sm text-slate-300 space-y-3 max-h-80 overflow-y-auto mb-4 p-2 bg-slate-900/30 rounded-lg">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-8 text-slate-400">

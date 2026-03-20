@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Columns, List, Sparkles, Clock, Check, Info, StickyNote, TrendingUp, Target, History, Timer, Trophy, Activity, Zap, ShieldCheck, Cloud, ArrowRight, Gauge } from 'lucide-react';
+import { ArrowLeft, Columns, List, Sparkles, Clock, Check, Info, StickyNote, TrendingUp, Target, History, Timer, Trophy, Activity, Zap, ShieldCheck, Cloud, ArrowRight, Gauge, Play, ExternalLink } from 'lucide-react';
 import { DaySchedule, Exercise, WorkoutLog, SetData, SwingSpeedData } from '../types';
 import { generateFormDescription, generateWorkoutRoutine } from '../services/geminiService';
 import GeminiModal from './GeminiModal';
 import { triggerBackgroundSync } from '../services/storageService';
+import { getExerciseDemo, getFallbackVideoUrl } from '../constants/exerciseDemos';
 
 interface WorkoutViewProps {
   dayKey: string;
@@ -30,6 +31,8 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
   const [modalContent, setModalContent] = useState<React.ReactNode>('');
   const [modalTextForTTS, setModalTextForTTS] = useState('');
   const [isModalLoading, setIsModalLoading] = useState(false);
+  const [modalVideoUrl, setModalVideoUrl] = useState<string | undefined>(undefined);
+  const [modalIsGolfSpecific, setModalIsGolfSpecific] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
 
   // Swing speed tracking — only used when the workout has speed exercises
@@ -200,7 +203,14 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
 
   const openFormCheck = async (exId: string, defaultName: string, category: string) => {
     const name = customNames[exId] || defaultName;
+
+    // Look up demo data for this exercise
+    const demo = getExerciseDemo(name);
+    const videoUrl = demo?.videoSearchUrl || getFallbackVideoUrl(name);
+
     setModalTitle(`${name} - Technical Check`);
+    setModalVideoUrl(videoUrl);
+    setModalIsGolfSpecific(demo?.isGolfSpecific || false);
     setIsModalLoading(true);
     setModalOpen(true);
     setModalContent('');
@@ -209,7 +219,7 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
       const text = await generateFormDescription(name, category);
       setModalContent(<p className="italic text-slate-300 leading-relaxed font-medium">"{text}"</p>);
       setModalTextForTTS(text);
-    } catch (e) { setModalContent(<p className="text-red-400">Consultation failed.</p>); } 
+    } catch (e) { setModalContent(<p className="text-red-400">Consultation failed.</p>); }
     finally { setIsModalLoading(false); }
   };
 
@@ -390,7 +400,7 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
 
   return (
     <div className="pb-32 animate-in fade-in duration-500">
-      <GeminiModal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={modalTitle} content={modalContent} textContent={modalTextForTTS} loading={isModalLoading} />
+      <GeminiModal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={modalTitle} content={modalContent} textContent={modalTextForTTS} loading={isModalLoading} videoUrl={modalVideoUrl} isGolfSpecific={modalIsGolfSpecific} />
 
       {/* First Time Tutorial Overlay */}
       {showTutorial && (
@@ -488,20 +498,50 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
             <div className={`p-3 ${layout === 'split' && group.items.length > 1 ? 'grid grid-cols-2 gap-3' : 'space-y-6'}`}>
               {group.items.map(ex => (
                 <div key={ex.id} className="relative">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex-1 mr-1 min-w-0">
-                        <input type="text" value={customNames[ex.id] || ex.name} onChange={(e) => handleNameChange(ex.id, e.target.value)} className="bg-transparent border-none p-0 text-xs font-black text-blue-400 focus:ring-0 w-full truncate" />
-                        <div className="text-[8px] text-slate-600 flex items-center gap-1 mt-0.5 font-bold uppercase tracking-tight">
-                           <span className="text-slate-500">{ex.defaultCategory}</span>
-                           {ex.tempo && <><span className="w-0.5 h-0.5 bg-slate-700 rounded-full"></span><span className="text-amber-500/70">Tempo: {ex.tempo}</span></>}
-                           {ex.rpe && <><span className="w-0.5 h-0.5 bg-slate-700 rounded-full"></span><span className="text-emerald-500/70">RPE {ex.rpe}</span></>}
+                  {(() => {
+                    const currentName = customNames[ex.id] || ex.name;
+                    const demo = getExerciseDemo(currentName);
+                    return (
+                      <>
+                        <div className="flex justify-between items-start mb-1">
+                          <div className="flex-1 mr-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <input type="text" value={currentName} onChange={(e) => handleNameChange(ex.id, e.target.value)} className="bg-transparent border-none p-0 text-xs font-black text-blue-400 focus:ring-0 flex-1 min-w-0 truncate" />
+                              {demo?.isGolfSpecific && (
+                                <span className="text-[7px] font-black bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded shrink-0 uppercase tracking-tighter">Golf</span>
+                              )}
+                            </div>
+                            <div className="text-[8px] text-slate-600 flex items-center gap-1 mt-0.5 font-bold uppercase tracking-tight">
+                               <span className="text-slate-500">{ex.defaultCategory}</span>
+                               {demo?.muscles && <><span className="w-0.5 h-0.5 bg-slate-700 rounded-full"></span><span className="text-slate-600">{demo.muscles}</span></>}
+                               {ex.tempo && <><span className="w-0.5 h-0.5 bg-slate-700 rounded-full"></span><span className="text-amber-500/70">Tempo: {ex.tempo}</span></>}
+                               {ex.rpe && <><span className="w-0.5 h-0.5 bg-slate-700 rounded-full"></span><span className="text-emerald-500/70">RPE {ex.rpe}</span></>}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            {/* Video demo button — opens YouTube in new tab */}
+                            <a
+                              href={demo?.videoSearchUrl || getFallbackVideoUrl(currentName)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-red-500/60 hover:text-red-400 transition p-0.5"
+                              title="Watch Demo"
+                            >
+                              <Play size={12} fill="currentColor" />
+                            </a>
+                            <button onClick={() => onStartTimer(ex.rest)} title="Rest" className="text-slate-600 hover:text-amber-500 transition p-0.5"><Timer size={12} /></button>
+                            <button onClick={() => openFormCheck(ex.id, ex.name, ex.defaultCategory)} className="text-slate-600 hover:text-blue-400 transition p-0.5"><Info size={12} /></button>
+                          </div>
                         </div>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button onClick={() => onStartTimer(ex.rest)} title="Rest" className="text-slate-600 hover:text-amber-500 transition p-0.5"><Timer size={12} /></button>
-                      <button onClick={() => openFormCheck(ex.id, ex.name, ex.defaultCategory)} className="text-slate-600 hover:text-blue-400 transition p-0.5"><Info size={12} /></button>
-                    </div>
-                  </div>
+                        {/* Inline form cue — always visible, no tap needed */}
+                        {demo?.formCue && (
+                          <p className="text-[9px] text-slate-600 italic mb-2 leading-snug pl-0.5">
+                            {demo.formCue}
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
                   {renderSetInputs(ex, layout === 'split')}
                 </div>
               ))}
