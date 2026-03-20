@@ -316,6 +316,3 @@ export function shouldReassess(): boolean {
   const fourWeeksMs = 28 * 24 * 60 * 60 * 1000;
   return Date.now() - assessment.completedAt > fourWeeksMs;
 }
-
-// Re-export test definitions for the assessment UI
-export { MOBILITY_TESTS };
