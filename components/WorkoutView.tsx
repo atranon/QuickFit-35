@@ -5,6 +5,7 @@ import { DaySchedule, Exercise, WorkoutLog, SetData, SwingSpeedData, WarmUpExerc
 import { generateFormDescription, generateWorkoutRoutine } from '../services/geminiService';
 import GeminiModal from './GeminiModal';
 import VideoModal from './VideoModal';
+import ExerciseDemoModal from './ExerciseDemoModal';
 import { triggerBackgroundSync } from '../services/storageService';
 import { getExerciseDemo, getFallbackVideoUrl } from '../constants/exerciseDemos';
 import { buildWarmUp, getCoolDown } from '../constants/mobilityAssessment';
@@ -40,6 +41,12 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [videoModalUrl, setVideoModalUrl] = useState('');
   const [videoModalExercise, setVideoModalExercise] = useState('');
+
+  // Exercise Demo Modal state
+  const [demoModalOpen, setDemoModalOpen] = useState(false);
+  const [demoExerciseName, setDemoExerciseName] = useState('');
+  const [demoData, setDemoData] = useState<any>(null);
+  const [demoFallbackUrl, setDemoFallbackUrl] = useState('');
 
   const [showTutorial, setShowTutorial] = useState(false);
 
@@ -412,8 +419,24 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
     localStorage.setItem('workout_tutorial_seen', 'true');
   };
 
+  const openDemoModal = (exerciseName: string) => {
+    const demo = getExerciseDemo(exerciseName);
+    setDemoExerciseName(exerciseName);
+    setDemoData(demo);
+    setDemoFallbackUrl(demo?.videoSearchUrl || getFallbackVideoUrl(exerciseName));
+    setDemoModalOpen(true);
+  };
+
   return (
     <div className="pb-32 animate-in fade-in duration-500">
+      <ExerciseDemoModal
+        isOpen={demoModalOpen}
+        onClose={() => setDemoModalOpen(false)}
+        exerciseName={demoExerciseName}
+        demo={demoData}
+        fallbackSearchUrl={demoFallbackUrl}
+      />
+
       <GeminiModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -598,13 +621,9 @@ const WorkoutView: React.FC<WorkoutViewProps> = ({ dayKey, schedule, onBack, onS
                             </div>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
-                            {/* Video demo button — opens video modal */}
+                            {/* Video demo button — opens exercise demo modal */}
                             <button
-                              onClick={() => {
-                                setVideoModalUrl(demo?.videoSearchUrl || getFallbackVideoUrl(currentName));
-                                setVideoModalExercise(currentName);
-                                setVideoModalOpen(true);
-                              }}
+                              onClick={() => openDemoModal(currentName)}
                               className="text-red-500/60 hover:text-red-400 transition p-0.5"
                               title="Watch Demo"
                             >
