@@ -61,3 +61,30 @@ export const playBeep = () => {
     console.error("Audio beep failed", e);
   }
 };
+
+/**
+ * Plays a soft tick sound for countdown warnings.
+ * Much quieter and shorter than the completion beep.
+ */
+export const playTick = () => {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const ctx = new AudioContextClass();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1200, ctx.currentTime); // High, short tick
+
+    gain.gain.setValueAtTime(0.05, ctx.currentTime); // Very quiet
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.08);
+  } catch (e) {
+    // Silent fail — audio isn't critical
+  }
+};

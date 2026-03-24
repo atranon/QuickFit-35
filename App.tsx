@@ -15,7 +15,7 @@ import SettingsView from './components/SettingsView';
 import PreferencesView from './components/PreferencesView';
 import FeedbackPage from './components/FeedbackPage';
 import FloatingFeedbackButton from './components/FloatingFeedbackButton';
-import { playBeep } from './utils/audioUtils';
+import { playBeep, playTick } from './utils/audioUtils';
 import { connectToHeartRateDevice } from './services/bleService';
 import { getRecommendedPlan } from './lib/recommendation';
 import { getCurrentPhase, applyPhaseToSchedule } from './lib/phaseEngine';
@@ -63,6 +63,9 @@ const App: React.FC = () => {
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle');
 
+  // Timer State
+  const [currentExerciseRest, setCurrentExerciseRest] = useState<number>(60);
+
   const intervalRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -102,7 +105,7 @@ const App: React.FC = () => {
     localStorage.setItem('selected_program', selectedProgram);
   }, [selectedPlan, selectedProgram]);
 
-  // Timer Logic
+  // Timer Logic — with countdown warning sounds
   useEffect(() => {
     if (timerSeconds > 0 && timerActive) {
       intervalRef.current = window.setInterval(() => {
@@ -110,7 +113,13 @@ const App: React.FC = () => {
           if (prev <= 1) {
             playBeep();
             setTimerActive(false);
+            // Vibrate on mobile if available
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
             return 0;
+          }
+          // Countdown tick at 5, 4, 3 seconds
+          if (prev === 6 || prev === 5 || prev === 4) {
+            playTick();
           }
           return prev - 1;
         });
@@ -143,9 +152,19 @@ const App: React.FC = () => {
     setTimerSeconds(0);
   };
 
+  const extendTimer = (sec: number) => {
+    setTimerSeconds(prev => prev + sec);
+    if (!timerActive) setTimerActive(true);
+  };
+
   const handleWorkoutSelect = (dayKey: string) => {
     stopTimer();
     setActiveDayKey(dayKey);
+    // Get the first exercise's rest time for smart timer presets
+    const schedule = PLANS[selectedProgram][selectedPlan].schedule[dayKey];
+    if (schedule?.exercises?.[0]?.rest) {
+      setCurrentExerciseRest(schedule.exercises[0].rest);
+    }
     setView('workout');
   };
 
@@ -698,6 +717,8 @@ const App: React.FC = () => {
         isActive={timerActive}
         onStart={startTimer}
         onStop={stopTimer}
+        onExtend={extendTimer}
+        prescribedRest={currentExerciseRest}
       />
 
       {/* Floating feedback button - shows on all pages except feedback page */}
