@@ -1,3 +1,5 @@
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
+
 export const decodeBase64 = (base64: string): Uint8Array => {
   const binaryString = atob(base64);
   const len = binaryString.length;
@@ -27,7 +29,15 @@ export const decodeAudioData = async (
   return buffer;
 };
 
-export const playBeep = () => {
+export const playBeep = async () => {
+  // Haptic feedback on native devices
+  try {
+    await Haptics.impact({ style: ImpactStyle.Heavy });
+  } catch {
+    // Silently fail on web — haptics only work on native
+  }
+
+  // Audio beep
   try {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
     const ctx = new AudioContextClass();
@@ -66,7 +76,15 @@ export const playBeep = () => {
  * Plays a soft tick sound for countdown warnings.
  * Much quieter and shorter than the completion beep.
  */
-export const playTick = () => {
+export const playTick = async () => {
+  // Light haptic feedback on native devices
+  try {
+    await Haptics.impact({ style: ImpactStyle.Light });
+  } catch {
+    // Silently fail on web — haptics only work on native
+  }
+
+  // Audio tick
   try {
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
     const ctx = new AudioContextClass();
